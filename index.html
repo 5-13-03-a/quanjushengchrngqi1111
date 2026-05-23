@@ -29,11 +29,17 @@ select{background:rgba(255,255,255,0.06);border:0.5px solid var(--border);border
 .tg-tab.active{background:#fff;color:#000;border-color:#fff;}
 
 /* ═══ Preview ═══ */
-.tg-preview-wrap{background:var(--card);border:0.5px solid var(--border);border-radius:20px;margin:0 16px 16px;overflow:hidden;position:relative;}
+.tg-preview-wrap{background:var(--card);border:0.5px solid var(--border);border-radius:0 0 20px 20px;margin:0;overflow:hidden;position:sticky;top:126px;z-index:50;max-height:45vh;transition:max-height 0.3s ease;}
+.tg-preview-wrap.collapsed{max-height:120px;border-radius:0 0 16px 16px;}
+.tg-preview-wrap.collapsed .tg-chat-body{overflow:hidden;}
 .tg-preview-label{position:absolute;top:8px;right:12px;font-size:7px;font-weight:800;letter-spacing:2px;color:var(--text3);text-transform:uppercase;z-index:10;}
+.tg-preview-toggle{position:absolute;bottom:0;left:0;right:0;height:28px;display:flex;align-items:center;justify-content:center;background:linear-gradient(transparent,rgba(20,20,22,0.95));z-index:11;cursor:pointer;}
+.tg-preview-toggle svg{width:16px;height:16px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;transition:transform 0.3s;}
+.tg-preview-wrap.collapsed .tg-preview-toggle svg{transform:rotate(180deg);}
 
 /* ═══ 预览聊天室 ═══ */
-.tg-chat{display:flex;flex-direction:column;height:520px;background:#f0eeeb;}
+.tg-chat{display:flex;flex-direction:column;height:100%;max-height:45vh;background:#f0eeeb;transition:max-height 0.3s;}
+.tg-preview-wrap.collapsed .tg-chat{max-height:120px;}
 .tg-chat-topbar{padding:48px 16px 12px;background:#fff;display:flex;align-items:center;gap:10px;border-bottom:0.5px solid rgba(0,0,0,0.05);flex-shrink:0;}
 .tg-chat-topbar-back{width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
 .tg-chat-topbar-back svg{width:16px;height:16px;stroke:rgba(0,0,0,0.4);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
@@ -58,12 +64,16 @@ select{background:rgba(255,255,255,0.06);border:0.5px solid var(--border);border
 .cda-narr-line{text-align:center;font-size:11px;color:rgba(0,0,0,0.35);font-style:italic;padding:8px 20px;line-height:1.6;}
 .cda-dc-notif-row{width:100%;display:flex;justify-content:center;margin:8px 0;}
 .tg-chat-input{padding:8px 12px;background:#fff;border-top:0.5px solid rgba(0,0,0,0.05);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.tg-chat-input-plus{width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;}
+.tg-chat-input-plus svg{width:16px;height:16px;stroke:rgba(0,0,0,0.4);fill:none;stroke-width:2;stroke-linecap:round;}
 .tg-chat-input-field{flex:1;height:36px;background:rgba(0,0,0,0.03);border-radius:18px;border:0.5px solid rgba(0,0,0,0.06);padding:0 14px;font-size:12px;color:#1a1a1f;outline:none;}
-.tg-chat-input-send{width:32px;height:32px;border-radius:50%;background:#1a1a1f;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tg-chat-input-invoke{width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;}
+.tg-chat-input-invoke svg{width:15px;height:15px;stroke:rgba(0,0,0,0.35);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.tg-chat-input-send{width:32px;height:32px;border-radius:50%;background:#1a1a1f;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;}
 .tg-chat-input-send svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
 /* ═══ Panel ═══ */
-.tg-panel{display:none;padding:0 16px;}
+.tg-panel{display:none;padding:0 16px;padding-top:12px;}
 .tg-panel.active{display:block;}
 
 /* ═══ 手风琴 ═══ */
@@ -138,8 +148,9 @@ select{background:rgba(255,255,255,0.06);border:0.5px solid var(--border);border
 </div>
 
 <!-- Preview -->
-<div class="tg-preview-wrap">
+<div class="tg-preview-wrap" id="tgPreviewWrap">
     <div class="tg-preview-label">LIVE PREVIEW</div>
+    <div class="tg-preview-toggle" id="tgPreviewToggle"><svg viewBox="0 0 24 24"><polyline points="6 15 12 9 18 15"/></svg></div>
     <div class="tg-chat" id="tgPreview">
         <div class="tg-chat-topbar" id="tgTopbar">
             <div class="tg-chat-topbar-back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
@@ -149,8 +160,10 @@ select{background:rgba(255,255,255,0.06);border:0.5px solid var(--border);border
         </div>
         <div class="tg-chat-body" id="tgChatBody"></div>
         <div class="tg-chat-input" id="tgInputBar">
+            <div class="tg-chat-input-plus" id="tgInputPlus"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
             <input class="tg-chat-input-field" placeholder="Message..." readonly>
-            <div class="tg-chat-input-send"><svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></div>
+            <div class="tg-chat-input-invoke" id="tgInputInvoke"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div>
+            <div class="tg-chat-input-send" id="tgInputSend"><svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></div>
         </div>
     </div>
 </div>
@@ -164,6 +177,14 @@ select{background:rgba(255,255,255,0.06);border:0.5px solid var(--border);border
     <div class="tg-acc" id="accRecvBubble">
         <div class="tg-acc-hd"><span class="tg-acc-title">接收气泡 · Received</span><span class="tg-acc-badge">RECV</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
         <div class="tg-acc-body"><div class="tg-acc-inner" id="recvBubbleControls"></div></div>
+    </div>
+    <div class="tg-acc" id="accBubbleTails">
+        <div class="tg-acc-hd"><span class="tg-acc-title">气泡尾巴 · Bubble Tails</span><span class="tg-acc-badge">TAIL</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="tg-acc-body"><div class="tg-acc-inner">
+            <div style="font-size:9px;color:var(--text3);margin-bottom:12px;line-height:1.5;">给气泡角落添加自定义图片尾巴，不限数量。每个可独立控制位置和大小。</div>
+            <div id="tailList"></div>
+            <div class="tg-decor-add" id="tailAddBtn">+ 添加气泡尾巴</div>
+        </div></div>
     </div>
 </div>
 
@@ -302,6 +323,11 @@ function renderMockChat(){
 }
 renderMockChat();
 
+// ═══ 预览区收起/展开 ═══
+document.getElementById('tgPreviewToggle').addEventListener('click',function(){
+    document.getElementById('tgPreviewWrap').classList.toggle('collapsed');
+});
+
 // ═══ 手风琴 ═══
 document.addEventListener('click',function(e){
     var hd=e.target.closest('.tg-acc-hd');
@@ -363,8 +389,14 @@ function buildBubbleControls(prefix,defaults){
 var sentDefaults={bg:'#1a1a1f',color:'#ffffff',radius:16,padH:14,padV:9,shadowX:0,shadowY:0,shadowBlur:0,shadowColor:'#000000',shadowAlpha:0,borderW:0,borderColor:'#ffffff',borderAlpha:20,maxW:72};
 var recvDefaults={bg:'#ffffff',color:'#1a1a1f',radius:16,padH:14,padV:9,shadowX:0,shadowY:1,shadowBlur:3,shadowColor:'#000000',shadowAlpha:4,borderW:0,borderColor:'#000000',borderAlpha:5,maxW:72};
 
-document.getElementById('sentBubbleControls').innerHTML=buildBubbleControls('sent',sentDefaults)+makeSyncBtn('sent','recv','同步到接收气泡 →');
-document.getElementById('recvBubbleControls').innerHTML=buildBubbleControls('recv',recvDefaults)+makeSyncBtn('recv','sent','← 同步到发送气泡');
+document.getElementById('sentBubbleControls').innerHTML=buildBubbleControls('sent',sentDefaults)+
+    makeSubTitle('小尾巴')+
+    makeSelect('默认尾巴','sentTailHide',[{v:'show',n:'显示'},{v:'hide',n:'隐藏'}],'show')+
+    makeSyncBtn('sent','recv','同步到接收气泡 →');
+document.getElementById('recvBubbleControls').innerHTML=buildBubbleControls('recv',recvDefaults)+
+    makeSubTitle('小尾巴')+
+    makeSelect('默认尾巴','recvTailHide',[{v:'show',n:'显示'},{v:'hide',n:'隐藏'}],'show')+
+    makeSyncBtn('recv','sent','← 同步到发送气泡');
 
 // ═══ 头像控件 ═══
 document.getElementById('avatarControls').innerHTML=
@@ -401,21 +433,54 @@ document.getElementById('narrControls').innerHTML=
 
 // ═══ 顶栏控件 ═══
 document.getElementById('topbarControls').innerHTML=
+    makeSelect('覆盖模式','tbOverride',[{v:'full',n:'完全覆盖内置'},{v:'partial',n:'仅覆盖颜色（保留内置布局）'}],'partial')+
     makeColor('背景色','tbBg','#ffffff')+
     makeSlider('背景透明','tbBgAlpha',0,100,100,'1','%')+
     makeSlider('高度','tbHeight',36,120,56)+
     makeSlider('底部线宽','tbBorderB',0,3,0.5,'0.5')+
     makeColor('名字颜色','tbNameColor','#1a1a1f')+
-    makeSlider('名字字号','tbNameSize',10,22,13);
+    makeSlider('名字字号','tbNameSize',10,22,13)+
+    makeSlider('内边距H','tbPadH',8,30,16)+
+    makeColor('副标题色','tbSubColor','#999999')+
+    makeSlider('头像尺寸','tbAvSize',24,48,32)+
+    makeSlider('头像圆角','tbAvRadius',0,50,50,'1','%');
 
 // ═══ 底栏控件 ═══
 document.getElementById('inputbarControls').innerHTML=
+    makeSelect('覆盖模式','ibOverride',[{v:'full',n:'完全覆盖内置'},{v:'partial',n:'仅覆盖颜色（保留内置布局）'}],'partial')+
     makeColor('背景色','ibBg','#ffffff')+
     makeSlider('背景透明','ibBgAlpha',0,100,100,'1','%')+
     makeSlider('高度','ibHeight',36,80,52)+
+    makeSlider('内边距H','ibPadH',4,30,12)+
+    makeSlider('按钮间距','ibGap',0,20,8)+
+    makeSubTitle('输入框')+
     makeSlider('输入框圆角','ibFieldRadius',0,30,18)+
-    makeColor('发送键背景','ibSendBg','#1a1a1f')+
-    makeSlider('发送键圆角','ibSendRadius',0,50,50,'1','%');
+    makeSlider('输入框高度','ibFieldH',28,50,36)+
+    makeColor('输入框背景','ibFieldBg','#f5f5f5')+
+    makeSlider('输入框边框','ibFieldBorderW',0,3,0.5,'0.5')+
+    makeColor('输入框边框色','ibFieldBorderColor','#000000')+
+    makeSlider('边框透明度','ibFieldBorderAlpha',0,100,6,'1','%')+
+    makeSubTitle('+ 菜单键')+
+    makeSlider('尺寸','ibPlusSize',20,50,32)+
+    makeSlider('圆角','ibPlusRadius',0,50,50,'1','%')+
+    makeColor('背景','ibPlusBg','#f0f0f0')+
+    makeColor('图标色','ibPlusIcon','#666666')+
+    makeSlider('图标粗细','ibPlusStroke',1,4,2,'0.5')+
+    makeSelect('显示','ibPlusShow',[{v:'flex',n:'显示'},{v:'none',n:'隐藏'}],'flex')+
+    makeSubTitle('调取键')+
+    makeSlider('尺寸','ibInvokeSize',20,50,32)+
+    makeSlider('圆角','ibInvokeRadius',0,50,50,'1','%')+
+    makeColor('背景','ibInvokeBg','#f0f0f0')+
+    makeColor('图标色','ibInvokeIcon','#666666')+
+    makeSlider('图标粗细','ibInvokeStroke',1,4,2,'0.5')+
+    makeSelect('显示','ibInvokeShow',[{v:'flex',n:'显示'},{v:'none',n:'隐藏'}],'flex')+
+    makeSubTitle('发送键')+
+    makeSlider('尺寸','ibSendSize',20,50,32)+
+    makeSlider('圆角','ibSendRadius',0,50,50,'1','%')+
+    makeColor('背景','ibSendBg','#1a1a1f')+
+    makeColor('图标色','ibSendIcon','#ffffff')+
+    makeSubTitle('排列顺序')+
+    makeSelect('排列','ibOrder',[{v:'plus-field-invoke-send',n:'+ 输入框 调取 发送'},{v:'field-plus-invoke-send',n:'输入框 + 调取 发送'},{v:'plus-invoke-field-send',n:'+ 调取 输入框 发送'},{v:'field-send',n:'输入框 发送（隐藏其他）'}],'plus-field-invoke-send');
 
 // ═══ 字体控件 ═══
 document.getElementById('fontControls').innerHTML=
@@ -433,6 +498,51 @@ document.getElementById('bgControls').innerHTML=
     '<div style="margin-top:14px;"><div class="tg-label" style="margin-bottom:6px;">背景图 URL</div><input type="url" class="tg-ctrl" id="bgUrl" placeholder="https://..."></div>'+
     makeSlider('模糊','bgBlur',0,30,0)+
     makeSlider('透明度','bgAlpha',0,100,100,'1','%');
+
+// ═══ 气泡尾巴系统 ═══
+var tailItems=[];
+var tailCounter=0;
+
+function addTailItem(){
+    var id=++tailCounter;
+    tailItems.push({id:id});
+    renderTailList();
+}
+
+function removeTailItem(id){
+    tailItems=tailItems.filter(function(t){return t.id!==id;});
+    renderTailList();
+    applyPreview();
+}
+
+function renderTailList(){
+    var list=document.getElementById('tailList');
+    var html='';
+    tailItems.forEach(function(item,i){
+        var p='tail'+item.id+'_';
+        html+='<div class="tg-decor-item">';
+        html+='<div class="tg-decor-del" onclick="window._removeTail('+item.id+')">×</div>';
+        html+='<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:10px;">尾巴 #'+item.id+'</div>';
+        html+='<div style="margin-bottom:10px;"><div class="tg-label" style="margin-bottom:6px;">图片 URL</div><input type="url" class="tg-ctrl" id="'+p+'url" placeholder="https://...png"></div>';
+        html+=makeSelect('应用到',p+'target',[{v:'sent',n:'发送气泡'},{v:'recv',n:'接收气泡'},{v:'both',n:'双方气泡'}],'sent');
+        html+=makeSelect('位置',p+'pos',[{v:'top-left',n:'左上角'},{v:'top-right',n:'右上角'},{v:'bottom-left',n:'左下角'},{v:'bottom-right',n:'右下角'}],'bottom-right');
+        html+=makeSlider('宽度',p+'w',5,80,20);
+        html+=makeSlider('高度',p+'h',5,80,20);
+        html+=makeSlider('X微调',p+'x',-50,50,0);
+        html+=makeSlider('Y微调',p+'y',-50,50,0);
+        html+=makeSlider('透明度',p+'alpha',0,100,100,'1','%');
+        html+=makeSlider('旋转',p+'rotate',0,360,0,'1','°');
+        html+=makeSyncBtn(p,'__tairmirror__','同步镜像到对方 ↔');
+        html+='</div>';
+    });
+    list.innerHTML=html;
+    bindAllControls();
+}
+
+window._removeTail=removeTailItem;
+document.addEventListener('click',function(e){
+    if(e.target.id==='tailAddBtn'||e.target.closest('#tailAddBtn'))addTailItem();
+});
 
 // ═══ 装饰图系统 ═══
 var decorItems=[];
@@ -480,6 +590,40 @@ function renderDecorList(){
 window._removeDecor=removeDecorItem;
 document.getElementById('decorAddBtn').addEventListener('click',addDecorItem);
 
+function handleTailMirrorSync(fromPrefix){
+    var srcId=parseInt(fromPrefix.replace('tail','').replace('_',''),10);
+    var url=(document.getElementById(fromPrefix+'url')||{}).value||'';
+    var target=(document.getElementById(fromPrefix+'target')||{}).value||'sent';
+    var mirrorTarget=target==='sent'?'recv':(target==='recv'?'sent':'both');
+    addTailItem();
+    var newItem=tailItems[tailItems.length-1];
+    var np='tail'+newItem.id+'_';
+    setTimeout(function(){
+        var fields=['w','h','alpha','rotate'];
+        fields.forEach(function(f){
+            var src=document.getElementById(fromPrefix+f);
+            var dst=document.getElementById(np+f);
+            if(src&&dst){dst.value=src.value;var vEl=document.getElementById(np+f+'Val');if(vEl){var svEl=document.getElementById(fromPrefix+f+'Val');if(svEl)vEl.textContent=svEl.textContent;}}
+        });
+        var srcX=document.getElementById(fromPrefix+'x');
+        var dstX=document.getElementById(np+'x');
+        if(srcX&&dstX){dstX.value=-parseInt(srcX.value);var vx=document.getElementById(np+'xVal');if(vx)vx.textContent=dstX.value;}
+        var srcY=document.getElementById(fromPrefix+'y');
+        var dstY=document.getElementById(np+'y');
+        if(srcY&&dstY){dstY.value=srcY.value;var vy=document.getElementById(np+'yVal');if(vy)vy.textContent=dstY.value;}
+        var urlEl=document.getElementById(np+'url');if(urlEl)urlEl.value=url;
+        var tgtEl=document.getElementById(np+'target');if(tgtEl)tgtEl.value=mirrorTarget;
+        var srcPos=(document.getElementById(fromPrefix+'pos')||{}).value||'bottom-right';
+        var dstPos=document.getElementById(np+'pos');
+        if(dstPos){
+            var posMap={'top-left':'top-right','top-right':'top-left','bottom-left':'bottom-right','bottom-right':'bottom-left'};
+            dstPos.value=posMap[srcPos]||srcPos;
+        }
+        applyPreview();
+        showToast('尾巴已镜像');
+    },50);
+}
+
 // ═══ 绑定所有控件 ═══
 function bindAllControls(){
     document.querySelectorAll('.tg-ctrl').forEach(function(el){
@@ -507,8 +651,11 @@ document.addEventListener('click',function(e){
     if(!from||!to)return;
 
     if(to==='__mirror__'){
-        // 装饰图镜像同步
         handleDecorMirrorSync(from);
+        return;
+    }
+    if(to==='__tairmirror__'){
+        handleTailMirrorSync(from);
         return;
     }
 
@@ -632,7 +779,12 @@ function generateCSS(forPreview){
     if(avRecv==='none')css+=P+'.cda-msg-row.received .cda-msg-av{display:none!important;}\n';
     else if(avRecv==='all')css+=P+'.cda-msg-row.received .cda-msg-av.hidden{visibility:visible!important;}\n';
     if(avSent==='none'){}
-    else if(avSent==='last'||avSent==='all')css+=P+'.cda-msg-row.sent .cda-sent-av{display:flex!important;}\n';
+    else if(avSent==='all'){
+        css+=P+'.cda-msg-row.sent .cda-sent-av{display:flex!important;}\n';
+        css+=P+'.cda-msg-row.sent .cda-sent-av.hidden{visibility:visible!important;display:flex!important;}\n';
+    }else if(avSent==='last'){
+        css+=P+'.cda-msg-row.sent .cda-sent-av{display:flex!important;}\n';
+    }
     css+='\n';
 
     // 间距
@@ -654,16 +806,222 @@ function generateCSS(forPreview){
     css+='}\n\n';
 
     // 顶栏
+    var tbOverride=gv('tbOverride');
     var tbSel=forPreview?'.tg-chat-topbar':P+'.cda-topbar';
     var tbNameSel=forPreview?'.tg-chat-topbar-name':P+'.cda-topbar-name';
-    css+=tbSel+'{background:'+hexToRgba(gv('tbBg'),gvn('tbBgAlpha'))+'!important;min-height:'+gvn('tbHeight')+'px!important;border-bottom:'+gvn('tbBorderB')+'px solid rgba(0,0,0,0.05)!important;}\n';
-    css+=tbNameSel+'{color:'+gv('tbNameColor')+'!important;font-size:'+gvn('tbNameSize')+'px!important;}\n\n';
+    if(tbOverride==='full'&&!forPreview){
+        css+='/* TB_FULL */\n';
+        css+=P+'.cda-topbar{\n';
+        css+='  background:'+hexToRgba(gv('tbBg'),gvn('tbBgAlpha'))+'!important;\n';
+        css+='  min-height:'+gvn('tbHeight')+'px!important;\n';
+        css+='  padding:48px '+gvn('tbPadH')+'px 12px!important;\n';
+        css+='  display:flex!important;\n';
+        css+='  align-items:center!important;\n';
+        css+='  gap:10px!important;\n';
+        css+='  border-bottom:'+gvn('tbBorderB')+'px solid rgba(0,0,0,0.05)!important;\n';
+        css+='  border-radius:0!important;\n';
+        css+='  box-shadow:none!important;\n';
+        css+='  margin:0!important;\n';
+        css+='  position:relative!important;\n';
+        css+='  overflow:visible!important;\n';
+        css+='}\n';
+        css+=P+'.cda-topbar>div:not([id="cdaBack"]):not([id="cdaTopbarRight"]){\n';
+        css+='  display:contents!important;\n';
+        css+='}\n';
+        css+=P+'.cda-topbar .cda-polaroid-stack,'+P+'.cda-topbar .cda-heart,'+P+'.cda-topbar .cda-clip,'+P+'.cda-topbar .cda-polaroid{\n';
+        css+='  display:none!important;\n';
+        css+='}\n';
+        css+=P+'[id="cdaBack"]{\n';
+        css+='  display:flex!important;align-items:center!important;cursor:pointer!important;\n';
+        css+='  position:static!important;transform:none!important;margin:0!important;\n';
+        css+='}\n';
+        css+=P+'[id="cdaBack"] svg{width:18px!important;height:18px!important;stroke:'+gv('tbNameColor')+'!important;fill:none!important;stroke-width:2.5!important;opacity:0.6!important;}\n';
+        css+=P+'.cda-topbar-name{\n';
+        css+='  color:'+gv('tbNameColor')+'!important;font-size:'+gvn('tbNameSize')+'px!important;font-weight:700!important;\n';
+        css+='  position:static!important;transform:none!important;\n';
+        css+='}\n';
+        css+=P+'.cda-topbar [style*="font-size:8px"],'+P+'.cda-topbar [style*="font-size:9px"],'+P+'.cda-topbar [style*="font-size:7px"]{\n';
+        css+='  color:'+gv('tbSubColor')+'!important;\n';
+        css+='}\n';
+        css+=P+'.cda-topbar [style*="border-radius:50%"],'+P+'.cda-topbar [style*="border-radius:4px"]{\n';
+        css+='  width:'+gvn('tbAvSize')+'px!important;height:'+gvn('tbAvSize')+'px!important;\n';
+        css+='  border-radius:'+gvn('tbAvRadius')+'%!important;\n';
+        css+='  position:static!important;transform:none!important;\n';
+        css+='}\n';
+        css+=P+'[id="cdaTopbarRight"]{\n';
+        css+='  display:flex!important;gap:8px!important;margin-left:auto!important;\n';
+        css+='  position:static!important;transform:none!important;\n';
+        css+='}\n';
+        css+=P+'.cda-topbar-circle{\n';
+        css+='  width:28px!important;height:28px!important;border-radius:50%!important;\n';
+        css+='  display:flex!important;align-items:center!important;justify-content:center!important;\n';
+        css+='  background:rgba(0,0,0,0.04)!important;\n';
+        css+='  position:static!important;transform:none!important;\n';
+        css+='}\n';
+    }else{
+        css+=tbSel+'{background:'+hexToRgba(gv('tbBg'),gvn('tbBgAlpha'))+'!important;min-height:'+gvn('tbHeight')+'px!important;border-bottom:'+gvn('tbBorderB')+'px solid rgba(0,0,0,0.05)!important;}\n';
+        css+=tbNameSel+'{color:'+gv('tbNameColor')+'!important;font-size:'+gvn('tbNameSize')+'px!important;}\n';
+    }
+    css+='\n';
 
     // 底栏
+    var ibOverride=gv('ibOverride');
+    if(ibOverride==='full'&&!forPreview){
+        css+='/* IB_FULL */\n';
+        // 样式f是干净结构，CSS直接生效
+        css+=P+'.cda-input-bar.cda-bar-f{\n';
+        css+='  background:'+hexToRgba(gv('ibBg'),gvn('ibBgAlpha'))+'!important;\n';
+        css+='  min-height:'+gvn('ibHeight')+'px!important;\n';
+        css+='  padding:0 '+gvn('ibPadH')+'px!important;\n';
+        css+='  gap:'+gvn('ibGap')+'px!important;\n';
+        css+='}\n';
+        // HTML已被JS重建为干净结构，直接写CSS
+        css+=P+'#cdaIbOverlay,'+P+'.cda-input-bar{\n';
+        css+='  display:flex!important;\n';
+        css+='  align-items:center!important;\n';
+        css+='  background:'+hexToRgba(gv('ibBg'),gvn('ibBgAlpha'))+'!important;\n';
+        css+='  min-height:'+gvn('ibHeight')+'px!important;\n';
+        css+='  padding:0 '+gvn('ibPadH')+'px!important;\n';
+        css+='  gap:'+gvn('ibGap')+'px!important;\n';
+        css+='  border-top:0.5px solid rgba(0,0,0,0.05)!important;\n';
+        css+='  border-radius:0!important;\n';
+        css+='  box-shadow:none!important;\n';
+        css+='}\n';
+        css+=P+'.cda-input-bar #cdaPlusBtn{\n';
+        css+='  width:'+gvn('ibPlusSize')+'px!important;height:'+gvn('ibPlusSize')+'px!important;\n';
+        css+='  border-radius:'+gvn('ibPlusRadius')+'%!important;\n';
+        css+='  background:'+gv('ibPlusBg')+'!important;\n';
+        css+='  display:'+gv('ibPlusShow')+'!important;\n';
+        css+='}\n';
+        css+=P+'.cda-input-bar #cdaPlusBtn svg{stroke:'+gv('ibPlusIcon')+'!important;stroke-width:'+gvn('ibPlusStroke')+'!important;}\n';
+        css+=P+'.cda-input-bar #cdaInvoke,.cda-input-invoke{\n';
+        css+='  width:'+gvn('ibInvokeSize')+'px!important;height:'+gvn('ibInvokeSize')+'px!important;\n';
+        css+='  border-radius:'+gvn('ibInvokeRadius')+'%!important;\n';
+        css+='  background:'+gv('ibInvokeBg')+'!important;\n';
+        css+='  display:'+gv('ibInvokeShow')+'!important;\n';
+        css+='}\n';
+        css+=P+'.cda-input-bar #cdaInvoke svg,.cda-input-invoke svg{stroke:'+gv('ibInvokeIcon')+'!important;stroke-width:'+gvn('ibInvokeStroke')+'!important;}\n';
+        css+=P+'.cda-input-bar #cdaSend,.cda-input-send{\n';
+        css+='  width:'+gvn('ibSendSize')+'px!important;height:'+gvn('ibSendSize')+'px!important;\n';
+        css+='  border-radius:'+gvn('ibSendRadius')+'%!important;\n';
+        css+='  background:'+gv('ibSendBg')+'!important;\n';
+        css+='}\n';
+        css+=P+'.cda-input-bar #cdaSend svg,.cda-input-send svg{stroke:'+gv('ibSendIcon')+'!important;}\n';
+        css+=P+'.cda-input-bar .cda-input-field,'+P+'.cda-input-bar #cdaInput{\n';
+        css+='  flex:1!important;\n';
+        css+='  height:'+gvn('ibFieldH')+'px!important;\n';
+        css+='  border-radius:'+gvn('ibFieldRadius')+'px!important;\n';
+        css+='  background:'+gv('ibFieldBg')+'!important;\n';
+        css+='  border:'+(gvn('ibFieldBorderW')>0?gvn('ibFieldBorderW')+'px solid '+hexToRgba(gv('ibFieldBorderColor'),gvn('ibFieldBorderAlpha')):'0.5px solid rgba(0,0,0,0.06)')+'!important;\n';
+        css+='  padding:0 14px!important;\n';
+        css+='  font-size:13px!important;\n';
+        css+='}\n';
+        // 排列顺序
+        var ibOrder=gv('ibOrder');
+        if(ibOrder==='plus-field-invoke-send'){
+            css+=P+'.cda-input-bar #cdaPlusBtn{order:1!important;}\n';
+            css+=P+'.cda-input-bar #cdaInput,.cda-input-field{order:2!important;}\n';
+            css+=P+'.cda-input-bar #cdaInvoke,.cda-input-invoke{order:3!important;}\n';
+            css+=P+'.cda-input-bar #cdaSend,.cda-input-send{order:4!important;}\n';
+        }else if(ibOrder==='field-plus-invoke-send'){
+            css+=P+'.cda-input-bar #cdaInput,.cda-input-field{order:1!important;}\n';
+            css+=P+'.cda-input-bar #cdaPlusBtn{order:2!important;}\n';
+            css+=P+'.cda-input-bar #cdaInvoke,.cda-input-invoke{order:3!important;}\n';
+            css+=P+'.cda-input-bar #cdaSend,.cda-input-send{order:4!important;}\n';
+        }else if(ibOrder==='plus-invoke-field-send'){
+            css+=P+'.cda-input-bar #cdaPlusBtn{order:1!important;}\n';
+            css+=P+'.cda-input-bar #cdaInvoke,.cda-input-invoke{order:2!important;}\n';
+            css+=P+'.cda-input-bar #cdaInput,.cda-input-field{order:3!important;}\n';
+            css+=P+'.cda-input-bar #cdaSend,.cda-input-send{order:4!important;}\n';
+        }else if(ibOrder==='field-send'){
+            css+=P+'.cda-input-bar #cdaPlusBtn{display:none!important;}\n';
+            css+=P+'.cda-input-bar #cdaInvoke,.cda-input-invoke{display:none!important;}\n';
+            css+=P+'.cda-input-bar #cdaInput,.cda-input-field{order:1!important;}\n';
+            css+=P+'.cda-input-bar #cdaSend,.cda-input-send{order:2!important;}\n';
+        }
+        css+='\n';
+    }
     var ibSel=forPreview?'.tg-chat-input':P+'.cda-input-bar';
-    css+=ibSel+'{background:'+hexToRgba(gv('ibBg'),gvn('ibBgAlpha'))+'!important;min-height:'+gvn('ibHeight')+'px!important;}\n';
-    css+=(forPreview?'.tg-chat-input-field':P+'.cda-input-field')+'{border-radius:'+gvn('ibFieldRadius')+'px!important;}\n';
-    css+=(forPreview?'.tg-chat-input-send':P+'.cda-input-send')+'{background:'+gv('ibSendBg')+'!important;border-radius:'+gvn('ibSendRadius')+'%!important;}\n\n';
+    var ibFieldSel=forPreview?'.tg-chat-input-field':P+'.cda-input-field';
+    var ibPlusSel=forPreview?'.tg-chat-input-plus':P+'#cdaPlusBtn';
+    var ibInvokeSel=forPreview?'.tg-chat-input-invoke':P+'.cda-input-invoke';
+    var ibSendSel=forPreview?'.tg-chat-input-send':P+'.cda-input-send';
+
+    // full模式下非预览已经输出完了，跳过partial的重复输出
+    if(ibOverride==='full'&&!forPreview){
+        // 已经在上面full块里全部处理完了，这里只处理预览
+        if(forPreview){/* 不可能进来 */}
+    }else{
+
+    css+=ibSel+'{\n';
+    css+='  background:'+hexToRgba(gv('ibBg'),gvn('ibBgAlpha'))+'!important;\n';
+    css+='  min-height:'+gvn('ibHeight')+'px!important;\n';
+    css+='  padding:0 '+gvn('ibPadH')+'px!important;\n';
+    css+='  gap:'+gvn('ibGap')+'px!important;\n';
+    css+='  display:flex!important;align-items:center!important;\n';
+    css+='}\n';
+
+    // 输入框
+    css+=ibFieldSel+'{\n';
+    css+='  border-radius:'+gvn('ibFieldRadius')+'px!important;\n';
+    css+='  height:'+gvn('ibFieldH')+'px!important;\n';
+    css+='  background:'+gv('ibFieldBg')+'!important;\n';
+    if(gvn('ibFieldBorderW')>0)css+='  border:'+gvn('ibFieldBorderW')+'px solid '+hexToRgba(gv('ibFieldBorderColor'),gvn('ibFieldBorderAlpha'))+'!important;\n';
+    css+='}\n';
+
+    // + 菜单键
+    css+=ibPlusSel+'{\n';
+    css+='  width:'+gvn('ibPlusSize')+'px!important;height:'+gvn('ibPlusSize')+'px!important;\n';
+    css+='  border-radius:'+gvn('ibPlusRadius')+'%!important;\n';
+    css+='  background:'+gv('ibPlusBg')+'!important;\n';
+    css+='  display:'+gv('ibPlusShow')+'!important;\n';
+    css+='  align-items:center!important;justify-content:center!important;\n';
+    css+='}\n';
+    css+=ibPlusSel+' svg{stroke:'+gv('ibPlusIcon')+'!important;stroke-width:'+gvn('ibPlusStroke')+'!important;}\n';
+
+    // 调取键
+    css+=ibInvokeSel+'{\n';
+    css+='  width:'+gvn('ibInvokeSize')+'px!important;height:'+gvn('ibInvokeSize')+'px!important;\n';
+    css+='  border-radius:'+gvn('ibInvokeRadius')+'%!important;\n';
+    css+='  background:'+gv('ibInvokeBg')+'!important;\n';
+    css+='  display:'+gv('ibInvokeShow')+'!important;\n';
+    css+='  align-items:center!important;justify-content:center!important;\n';
+    css+='}\n';
+    css+=ibInvokeSel+' svg{stroke:'+gv('ibInvokeIcon')+'!important;stroke-width:'+gvn('ibInvokeStroke')+'!important;}\n';
+
+    // 发送键
+    css+=ibSendSel+'{\n';
+    css+='  width:'+gvn('ibSendSize')+'px!important;height:'+gvn('ibSendSize')+'px!important;\n';
+    css+='  border-radius:'+gvn('ibSendRadius')+'%!important;\n';
+    css+='  background:'+gv('ibSendBg')+'!important;\n';
+    css+='}\n';
+    css+=ibSendSel+' svg{stroke:'+gv('ibSendIcon')+'!important;}\n';
+
+    // 排列顺序
+    var ibOrder=gv('ibOrder');
+    if(ibOrder==='field-plus-invoke-send'){
+        css+=ibFieldSel+'{order:1!important;}\n';
+        css+=ibPlusSel+'{order:2!important;}\n';
+        css+=ibInvokeSel+'{order:3!important;}\n';
+        css+=ibSendSel+'{order:4!important;}\n';
+    }else if(ibOrder==='plus-invoke-field-send'){
+        css+=ibPlusSel+'{order:1!important;}\n';
+        css+=ibInvokeSel+'{order:2!important;}\n';
+        css+=ibFieldSel+'{order:3!important;}\n';
+        css+=ibSendSel+'{order:4!important;}\n';
+    }else if(ibOrder==='field-send'){
+        css+=ibPlusSel+'{display:none!important;}\n';
+        css+=ibInvokeSel+'{display:none!important;}\n';
+        css+=ibFieldSel+'{order:1!important;}\n';
+        css+=ibSendSel+'{order:2!important;}\n';
+    }
+    css+='\n';
+    } // end of partial/preview else block
+
+    // 消息区底部留出底栏空间
+    if(!forPreview){
+        css+=P+'.cda-messages{padding-bottom:'+Math.max(100,gvn('ibHeight')+24)+'px!important;}\n';
+    }
 
     // 字体
     var fSize=gvn('fontBubbleSize'),fLh=(gvn('fontLh')/100).toFixed(2);
@@ -687,6 +1045,54 @@ function generateCSS(forPreview){
             css+=P+'.cda-messages>*{position:relative;z-index:1;}\n';
         }
     }
+    css+='\n';
+
+    // 隐藏默认小尾巴
+    if(gv('sentTailHide')==='hide'){
+        css+=P+'.cda-msg-row.sent.has-tail .cda-bubble-wrap::before,'+P+'.cda-msg-row.sent.has-tail .cda-bubble-wrap::after{display:none!important;}\n';
+    }
+    if(gv('recvTailHide')==='hide'){
+        css+=P+'.cda-msg-row.received.has-tail .cda-bubble-wrap::before,'+P+'.cda-msg-row.received.has-tail .cda-bubble-wrap::after{display:none!important;}\n';
+    }
+
+    // 自定义气泡尾巴
+    tailItems.forEach(function(item){
+        var p='tail'+item.id+'_';
+        var url=gv(p+'url').trim();
+        if(!url)return;
+        var target=gv(p+'target');
+        var pos=gv(p+'pos');
+        var w=gvn(p+'w'),h=gvn(p+'h');
+        var x=gvn(p+'x'),y=gvn(p+'y');
+        var alpha=(gvn(p+'alpha')/100).toFixed(2);
+        var rotate=gvn(p+'rotate');
+
+        var posCSS='';
+        if(pos==='top-left')posCSS='top:'+y+'px;left:'+x+'px;';
+        else if(pos==='top-right')posCSS='top:'+y+'px;right:'+(-x)+'px;';
+        else if(pos==='bottom-left')posCSS='bottom:'+(-y)+'px;left:'+x+'px;';
+        else if(pos==='bottom-right')posCSS='bottom:'+(-y)+'px;right:'+(-x)+'px;';
+
+        var targets=[];
+        if(target==='sent'||target==='both')targets.push(P+'.cda-msg-row.sent .cda-bubble');
+        if(target==='recv'||target==='both')targets.push(P+'.cda-msg-row.received .cda-bubble');
+
+        targets.forEach(function(sel){
+            css+=sel+'{overflow:visible!important;position:relative!important;}\n';
+            // 用content+background-image的伪元素
+            var pseudoCount=tailItems.filter(function(t){return t.id<=item.id&&gv('tail'+t.id+'_target')===target;}).length;
+            var pseudo=pseudoCount<=1?'::after':'::before';
+            css+=sel+pseudo+'{\n';
+            css+='  content:""!important;position:absolute!important;\n';
+            css+='  '+posCSS+'\n';
+            css+='  width:'+w+'px!important;height:'+h+'px!important;\n';
+            css+='  background-image:url('+url+')!important;background-size:contain!important;background-repeat:no-repeat!important;\n';
+            css+='  opacity:'+alpha+'!important;\n';
+            css+='  transform:rotate('+rotate+'deg)!important;\n';
+            css+='  pointer-events:none!important;z-index:2!important;\n';
+            css+='}\n';
+        });
+    });
     css+='\n';
 
     // 装饰图
