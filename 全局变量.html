@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Theme Generator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{--bg:#0a0a0b;--card:#141416;--card2:#1a1a1e;--border:rgba(255,255,255,0.06);--text:#fff;--text2:rgba(255,255,255,0.5);--text3:rgba(255,255,255,0.25);--accent:#fff;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;line-height:1.5;overflow-x:hidden;min-height:100vh;padding-bottom:80px;}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid rgba(255,255,255,0.3);box-shadow:0 2px 8px rgba(0,0,0,0.4);}
+input[type=color]{-webkit-appearance:none;appearance:none;width:36px;height:36px;border:none;border-radius:8px;cursor:pointer;background:transparent;padding:0;}
+input[type=color]::-webkit-color-swatch-wrapper{padding:0;border-radius:8px;}
+input[type=color]::-webkit-color-swatch{border:1px solid rgba(255,255,255,0.1);border-radius:8px;}
+input[type=text],input[type=url],input[type=number]{width:100%;background:rgba(255,255,255,0.04);border:0.5px solid var(--border);border-radius:10px;padding:10px 14px;color:#fff;font-size:12px;outline:none;}
+input[type=text]:focus,input[type=url]:focus,input[type=number]:focus{border-color:rgba(255,255,255,0.2);}
+select{background:rgba(255,255,255,0.06);border:0.5px solid var(--border);border-radius:8px;padding:8px 10px;color:#fff;font-size:11px;outline:none;flex:1;}
+
+/* ═══ Header ═══ */
+.tg-header{position:sticky;top:0;z-index:100;padding:52px 20px 12px;background:var(--bg);}
+.tg-title{font-size:11px;font-weight:800;letter-spacing:4px;color:var(--text3);text-transform:uppercase;}
+.tg-subtitle{font-size:22px;font-weight:200;color:#fff;margin-top:4px;letter-spacing:-0.5px;}
+
+/* ═══ Tabs - 固定不动 ═══ */
+.tg-tabs{position:sticky;top:90px;z-index:99;display:flex;gap:6px;padding:8px 16px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:linear-gradient(180deg,var(--bg) 0%,var(--bg) 85%,transparent 100%);}
+.tg-tabs::-webkit-scrollbar{display:none;}
+.tg-tab{padding:7px 14px;border-radius:50px;font-size:10px;font-weight:700;letter-spacing:0.5px;white-space:nowrap;cursor:pointer;border:0.5px solid var(--border);background:transparent;color:var(--text2);transition:all 0.2s;flex-shrink:0;}
+.tg-tab.active{background:#fff;color:#000;border-color:#fff;}
+
+/* ═══ Preview ═══ */
+.tg-preview-wrap{background:var(--card);border:0.5px solid var(--border);border-radius:20px;margin:0 16px 16px;overflow:hidden;position:relative;}
+.tg-preview-label{position:absolute;top:8px;right:12px;font-size:7px;font-weight:800;letter-spacing:2px;color:var(--text3);text-transform:uppercase;z-index:10;}
+
+/* ═══ 预览聊天室 ═══ */
+.tg-chat{display:flex;flex-direction:column;height:520px;background:#f0eeeb;}
+.tg-chat-topbar{padding:48px 16px 12px;background:#fff;display:flex;align-items:center;gap:10px;border-bottom:0.5px solid rgba(0,0,0,0.05);flex-shrink:0;}
+.tg-chat-topbar-back{width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
+.tg-chat-topbar-back svg{width:16px;height:16px;stroke:rgba(0,0,0,0.4);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.tg-chat-topbar-av{width:32px;height:32px;border-radius:50%;background:#1a1a1f;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;overflow:hidden;}
+.tg-chat-topbar-info{flex:1;}
+.tg-chat-topbar-name{font-size:13px;font-weight:700;color:#1a1a1f;}
+.tg-chat-topbar-sub{font-size:9px;color:rgba(0,0,0,0.3);}
+.tg-chat-topbar-dots{width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
+.tg-chat-topbar-dots svg{width:16px;height:16px;stroke:rgba(0,0,0,0.3);fill:none;stroke-width:2;stroke-linecap:round;}
+.tg-chat-body{flex:1;overflow-y:auto;padding:16px 12px;display:flex;flex-direction:column;gap:4px;-webkit-overflow-scrolling:touch;position:relative;}
+.cda-msg-row{display:flex;align-items:flex-end;gap:6px;padding:2px 0;}
+.cda-msg-row.sent{flex-direction:row-reverse;}
+.cda-msg-row.received{flex-direction:row;}
+.cda-msg-row.group-start{margin-top:8px;}
+.cda-msg-av{width:28px;height:28px;border-radius:50%;background:#1a1a1f;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;}
+.cda-msg-av.hidden{visibility:hidden;}
+.cda-bubble-wrap{max-width:72%;position:relative;}
+.cda-msg-row.sent .cda-bubble-wrap{margin-left:auto;}
+.cda-bubble{padding:9px 14px;font-size:13px;line-height:1.55;word-wrap:break-word;position:relative;}
+.cda-msg-row.sent .cda-bubble{background:#1a1a1f;color:#fff;border-radius:16px 16px 4px 16px;}
+.cda-msg-row.received .cda-bubble{background:#fff;color:#1a1a1f;border-radius:16px 16px 16px 4px;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
+.cda-narr-line{text-align:center;font-size:11px;color:rgba(0,0,0,0.35);font-style:italic;padding:8px 20px;line-height:1.6;}
+.cda-dc-notif-row{width:100%;display:flex;justify-content:center;margin:8px 0;}
+.tg-chat-input{padding:8px 12px;background:#fff;border-top:0.5px solid rgba(0,0,0,0.05);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.tg-chat-input-field{flex:1;height:36px;background:rgba(0,0,0,0.03);border-radius:18px;border:0.5px solid rgba(0,0,0,0.06);padding:0 14px;font-size:12px;color:#1a1a1f;outline:none;}
+.tg-chat-input-send{width:32px;height:32px;border-radius:50%;background:#1a1a1f;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tg-chat-input-send svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ═══ Panel ═══ */
+.tg-panel{display:none;padding:0 16px;}
+.tg-panel.active{display:block;}
+
+/* ═══ 手风琴 ═══ */
+.tg-acc{background:var(--card);border:0.5px solid var(--border);border-radius:16px;margin-bottom:10px;overflow:hidden;}
+.tg-acc-hd{display:flex;align-items:center;padding:14px 16px;cursor:pointer;-webkit-user-select:none;user-select:none;}
+.tg-acc-title{flex:1;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.3px;}
+.tg-acc-badge{font-size:7px;font-weight:800;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-right:10px;}
+.tg-acc-chevron{width:16px;height:16px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);flex-shrink:0;}
+.tg-acc.open .tg-acc-chevron{transform:rotate(180deg);}
+.tg-acc-body{max-height:0;overflow:hidden;transition:max-height 0.4s cubic-bezier(0.16,1,0.3,1);}
+.tg-acc.open .tg-acc-body{max-height:2000px;}
+.tg-acc-inner{padding:0 16px 16px;}
+
+/* ═══ Row ═══ */
+.tg-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.tg-row:last-child{margin-bottom:0;}
+.tg-label{font-size:11px;color:var(--text2);min-width:70px;flex-shrink:0;}
+.tg-val{font-family:monospace;font-size:11px;color:#fff;min-width:36px;text-align:right;flex-shrink:0;}
+.tg-slider{flex:1;}
+.tg-color-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.tg-color-label{font-size:11px;color:var(--text2);flex:1;}
+.tg-sub-title{font-size:8px;font-weight:800;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin:16px 0 12px;padding-top:12px;border-top:0.5px solid var(--border);}
+
+/* ═══ Sync Button ═══ */
+.tg-sync-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:10px;border:0.5px dashed rgba(255,255,255,0.15);background:transparent;color:var(--text2);font-size:10px;font-weight:700;letter-spacing:0.5px;cursor:pointer;margin-top:16px;transition:all 0.2s;}
+.tg-sync-btn:active{background:rgba(255,255,255,0.06);transform:scale(0.97);}
+.tg-sync-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+
+/* ═══ Decor List ═══ */
+.tg-decor-item{background:rgba(255,255,255,0.03);border:0.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;position:relative;}
+.tg-decor-del{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--text3);}
+.tg-decor-add{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:12px;border:1px dashed rgba(255,255,255,0.1);background:transparent;color:var(--text3);font-size:10px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.tg-decor-add:active{background:rgba(255,255,255,0.04);}
+
+/* ═══ Export Bar ═══ */
+.tg-export-bar{position:fixed;bottom:0;left:0;right:0;padding:12px 16px;background:linear-gradient(180deg,transparent 0%,var(--bg) 30%);display:flex;gap:8px;z-index:200;}
+.tg-export-btn{flex:1;height:44px;border-radius:50px;border:none;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;}
+.tg-export-btn.primary{background:#fff;color:#000;}
+.tg-export-btn.ghost{background:transparent;border:0.5px solid rgba(255,255,255,0.15);color:var(--text2);}
+.tg-export-btn:active{transform:scale(0.96);opacity:0.8;}
+
+/* ═══ Toast ═══ */
+.tg-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#fff;color:#000;padding:8px 20px;border-radius:50px;font-size:11px;font-weight:700;z-index:9999;opacity:0;transition:opacity 0.2s;pointer-events:none;}
+.tg-toast.show{opacity:1;}
+
+/* ═══ Output Modal ═══ */
+.tg-output-overlay{position:fixed;inset:0;z-index:500;display:none;align-items:flex-end;justify-content:center;}
+.tg-output-overlay.active{display:flex;}
+.tg-output-bg{position:absolute;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.tg-output-card{position:relative;width:100%;max-height:80vh;background:var(--card);border-radius:20px 20px 0 0;padding:20px 16px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.tg-output-title{font-size:9px;font-weight:800;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:12px;}
+.tg-output-code{width:100%;min-height:200px;background:rgba(0,0,0,0.3);border:0.5px solid var(--border);border-radius:12px;padding:14px;font-family:monospace;font-size:10px;color:rgba(255,255,255,0.7);line-height:1.6;resize:none;outline:none;white-space:pre-wrap;word-break:break-all;}
+.tg-output-btns{display:flex;gap:8px;margin-top:14px;}
+.tg-output-btns button{flex:1;height:40px;border-radius:50px;border:none;font-size:9px;font-weight:800;letter-spacing:1px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="tg-header">
+    <div class="tg-title">Theme Generator</div>
+    <div class="tg-subtitle">Custom Style Builder</div>
+</div>
+
+<div class="tg-tabs" id="tgTabs">
+    <div class="tg-tab active" data-panel="bubble">气泡</div>
+    <div class="tg-tab" data-panel="layout">布局</div>
+    <div class="tg-tab" data-panel="narration">旁白</div>
+    <div class="tg-tab" data-panel="bars">栏</div>
+    <div class="tg-tab" data-panel="font">字体</div>
+    <div class="tg-tab" data-panel="decor">装饰图</div>
+    <div class="tg-tab" data-panel="bg">背景</div>
+</div>
+
+<!-- Preview -->
+<div class="tg-preview-wrap">
+    <div class="tg-preview-label">LIVE PREVIEW</div>
+    <div class="tg-chat" id="tgPreview">
+        <div class="tg-chat-topbar" id="tgTopbar">
+            <div class="tg-chat-topbar-back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></div>
+            <div class="tg-chat-topbar-av">K</div>
+            <div class="tg-chat-topbar-info"><div class="tg-chat-topbar-name">可可</div><div class="tg-chat-topbar-sub">online</div></div>
+            <div class="tg-chat-topbar-dots"><svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg></div>
+        </div>
+        <div class="tg-chat-body" id="tgChatBody"></div>
+        <div class="tg-chat-input" id="tgInputBar">
+            <input class="tg-chat-input-field" placeholder="Message..." readonly>
+            <div class="tg-chat-input-send"><svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Panel: 气泡 ═══ -->
+<div class="tg-panel active" id="panel-bubble">
+    <div class="tg-acc open" id="accSentBubble">
+        <div class="tg-acc-hd"><span class="tg-acc-title">发送气泡 · Sent</span><span class="tg-acc-badge">SENT</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="tg-acc-body"><div class="tg-acc-inner" id="sentBubbleControls"></div></div>
+    </div>
+    <div class="tg-acc" id="accRecvBubble">
+        <div class="tg-acc-hd"><span class="tg-acc-title">接收气泡 · Received</span><span class="tg-acc-badge">RECV</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="tg-acc-body"><div class="tg-acc-inner" id="recvBubbleControls"></div></div>
+    </div>
+</div>
+
+<!-- ═══ Panel: 布局 ═══ -->
+<div class="tg-panel" id="panel-layout">
+    <div class="tg-acc open">
+        <div class="tg-acc-hd"><span class="tg-acc-title">头像 · Avatar</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="tg-acc-body"><div class="tg-acc-inner" id="avatarControls"></div></div>
+    </div>
+    <div class="tg-acc">
+        <div class="tg-acc-hd"><span class="tg-acc-title">间距 · Spacing</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="tg-acc-body"><div class="tg-acc-inner" id="spacingControls"></div></div>
+    </div>
+</div>
+
+<!-- ═══ Panel: 旁白 ═══ -->
+<div class="tg-panel" id="panel-narration">
+    <div class="tg-acc open">
+        <div class="tg-acc-hd"><span class="tg-acc-title">旁白样式 · Narration</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="tg-acc-body"><div class="tg-acc-inner" id="narrControls"></div></div>
+    </div>
+</div>
+
+<!-- ═══ Panel: 栏 ═══ -->
+<div class="tg-panel" id="panel-bars">
+    <div class="tg-acc open">
+        <div class="tg-acc-hd"><span class="tg-acc-title">顶栏 · Top Bar</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="tg-acc-body"><div class="tg-acc-inner" id="topbarControls"></div></div>
+    </div>
+    <div class="tg-acc">
+        <div class="tg-acc-hd"><span class="tg-acc-title">底栏 · Input Bar</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="tg-acc-body"><div class="tg-acc-inner" id="inputbarControls"></div></div>
+    </div>
+</div>
+
+<!-- ═══ Panel: 字体 ═══ -->
+<div class="tg-panel" id="panel-font">
+    <div class="tg-acc open">
+        <div class="tg-acc-hd"><span class="tg-acc-title">字体设置 · Font</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="tg-acc-body"><div class="tg-acc-inner" id="fontControls"></div></div>
+    </div>
+</div>
+
+<!-- ═══ Panel: 装饰图 ═══ -->
+<div class="tg-panel" id="panel-decor">
+    <div id="decorList"></div>
+    <div class="tg-decor-add" id="decorAddBtn">+ 添加装饰图</div>
+</div>
+
+<!-- ═══ Panel: 背景 ═══ -->
+<div class="tg-panel" id="panel-bg">
+    <div class="tg-acc open">
+        <div class="tg-acc-hd"><span class="tg-acc-title">背景 · Background</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="tg-acc-body"><div class="tg-acc-inner" id="bgControls"></div></div>
+    </div>
+</div>
+
+<!-- Export -->
+<div class="tg-export-bar">
+    <button class="tg-export-btn ghost" id="tgReset">Reset</button>
+    <button class="tg-export-btn primary" id="tgExport">合并导出 CSS</button>
+</div>
+
+<div class="tg-output-overlay" id="tgOutputOverlay">
+    <div class="tg-output-bg" id="tgOutputBg"></div>
+    <div class="tg-output-card">
+        <div class="tg-output-title">Generated CSS · 复制到自定义样式</div>
+        <textarea class="tg-output-code" id="tgOutputCode" readonly></textarea>
+        <div class="tg-output-btns">
+            <button style="background:transparent;border:0.5px solid var(--border);color:var(--text2);" id="tgOutputClose">关闭</button>
+            <button style="background:#fff;color:#000;" id="tgOutputCopy">复制代码</button>
+        </div>
+    </div>
+</div>
+
+<div class="tg-toast" id="tgToast"></div>
+
+<script>
+(function(){
+'use strict';
+
+// ═══ 假数据（含长旁白） ═══
+var mockMessages=[
+    {type:'received',text:'在吗？'},
+    {type:'received',text:'今天有空吗，想出去走走'},
+    {type:'narr',text:'窗外的阳光透过百叶窗洒在地板上，形成一排排金色的光影。空气里弥漫着刚泡好的咖啡香气，时钟的秒针声在安静的房间里显得格外清晰。她盯着手机屏幕上那个正在输入的提示，心跳不自觉地加快了半拍。'},
+    {type:'sent',text:'在呢'},
+    {type:'sent',text:'下午可以啊，你想去哪'},
+    {type:'received',text:'附近新开了一家咖啡店'},
+    {type:'received',text:'听说环境不错'},
+    {type:'received',text:'要不要一起去看看'},
+    {type:'narr',text:'她发完消息后又删掉重打了好几次，指尖在屏幕上犹豫着。最后还是选了最简短的那句——就像每次一样，明明心里有千言万语，发出去的永远只有几个字。窗帘被风轻轻掀起又落下，像一声没说出口的叹息。'},
+    {type:'sent',text:'好呀'},
+    {type:'sent',text:'几点？'},
+    {type:'received',text:'三点吧'},
+    {type:'received',text:'我去接你'},
+    {type:'narr',text:'手机屏幕的光映在她微微上扬的嘴角。桌上的咖啡已经凉了，但她完全没注意到。'},
+    {type:'sent',text:'不用啦我自己去就好'},
+    {type:'sent',text:'到时候见～'},
+    {type:'received',text:'嗯'},
+    {type:'received',text:'那我等你'},
+    {type:'narr',text:'她把手机翻过来扣在桌面上，起身走到衣柜前。镜子里的人双颊微红，嘴角的弧度怎么也压不下去。「穿什么好呢……」她自言自语着，手指一件一件地拨过衣架上的衣服，心思却早已飞到了那家还没去过的咖啡店。'},
+    {type:'sent',text:'对了'},
+    {type:'sent',text:'你喜欢喝什么'},
+    {type:'received',text:'嗯…'},
+    {type:'received',text:'拿铁吧'},
+    {type:'received',text:'你呢'},
+    {type:'sent',text:'我也是！'},
+];
+
+function renderMockChat(){
+    var body=document.getElementById('tgChatBody');
+    var html='';
+    var lastType='';
+    mockMessages.forEach(function(m,i){
+        if(m.type==='narr'){
+            html+='<div class="cda-narr-line">'+m.text+'</div>';
+            lastType='';
+            return;
+        }
+        var isGroupStart=lastType!==m.type;
+        var next=mockMessages[i+1];
+        var isLast=!next||next.type!==m.type||next.type==='narr';
+        var classes='cda-msg-row '+m.type;
+        if(isLast)classes+=' has-tail';
+        if(isGroupStart)classes+=' group-start';
+        var avHtml='';
+        if(m.type==='received'){
+            avHtml=isLast?'<div class="cda-msg-av">K</div>':'<div class="cda-msg-av hidden">K</div>';
+        }
+        html+='<div class="'+classes+'">'+avHtml+'<div class="cda-bubble-wrap"><div class="cda-bubble">'+m.text+'</div></div></div>';
+        lastType=m.type;
+    });
+    body.innerHTML=html;
+    body.scrollTop=body.scrollHeight;
+}
+renderMockChat();
+
+// ═══ 手风琴 ═══
+document.addEventListener('click',function(e){
+    var hd=e.target.closest('.tg-acc-hd');
+    if(!hd)return;
+    hd.closest('.tg-acc').classList.toggle('open');
+});
+
+// ═══ Tab切换 ═══
+var tabs=document.querySelectorAll('.tg-tab');
+tabs.forEach(function(tab){
+    tab.addEventListener('click',function(){
+        tabs.forEach(function(t){t.classList.remove('active');});
+        tab.classList.add('active');
+        document.querySelectorAll('.tg-panel').forEach(function(p){p.classList.remove('active');});
+        var panel=document.getElementById('panel-'+tab.dataset.panel);
+        if(panel)panel.classList.add('active');
+    });
+});
+
+// ═══ 控件生成器 ═══
+function makeSlider(label,id,min,max,val,step,suffix){
+    return '<div class="tg-row"><span class="tg-label">'+label+'</span><input type="range" class="tg-slider tg-ctrl" id="'+id+'" min="'+min+'" max="'+max+'" value="'+val+'" step="'+(step||1)+'" data-suffix="'+(suffix||'')+'"><span class="tg-val" id="'+id+'Val">'+val+(suffix||'')+'</span></div>';
+}
+function makeColor(label,id,val){
+    return '<div class="tg-color-row"><span class="tg-color-label">'+label+'</span><input type="color" class="tg-ctrl" id="'+id+'" value="'+val+'"></div>';
+}
+function makeSelect(label,id,options,selected){
+    var h='<div class="tg-row"><span class="tg-label">'+label+'</span><select class="tg-ctrl" id="'+id+'">';
+    options.forEach(function(o){h+='<option value="'+o.v+'"'+(o.v===selected?' selected':'')+'>'+o.n+'</option>';});
+    return h+'</select></div>';
+}
+function makeSubTitle(text){return '<div class="tg-sub-title">'+text+'</div>';}
+function makeSyncBtn(fromId,toId,label){
+    return '<div class="tg-sync-btn" data-sync-from="'+fromId+'" data-sync-to="'+toId+'"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'+label+'</div>';
+}
+
+// ═══ 构建气泡控件 ═══
+function buildBubbleControls(prefix,defaults){
+    var d=defaults;
+    return makeColor('背景色',prefix+'Bg',d.bg)+
+        makeColor('文字色',prefix+'Color',d.color)+
+        makeSlider('圆角',prefix+'Radius',0,50,d.radius)+
+        makeSlider('内边距H',prefix+'PadH',0,40,d.padH)+
+        makeSlider('内边距V',prefix+'PadV',0,40,d.padV)+
+        makeSubTitle('阴影')+
+        makeSlider('X',prefix+'ShadowX',0,30,d.shadowX)+
+        makeSlider('Y',prefix+'ShadowY',0,30,d.shadowY)+
+        makeSlider('模糊',prefix+'ShadowBlur',0,50,d.shadowBlur)+
+        makeColor('阴影色',prefix+'ShadowColor',d.shadowColor)+
+        makeSlider('透明度',prefix+'ShadowAlpha',0,100,d.shadowAlpha,'1','%')+
+        makeSubTitle('边框')+
+        makeSlider('宽度',prefix+'BorderW',0,5,d.borderW,'0.5')+
+        makeColor('边框色',prefix+'BorderColor',d.borderColor)+
+        makeSlider('透明度',prefix+'BorderAlpha',0,100,d.borderAlpha,'1','%')+
+        makeSubTitle('布局')+
+        makeSlider('最大宽度',prefix+'MaxW',30,100,d.maxW,'1','%');
+}
+
+var sentDefaults={bg:'#1a1a1f',color:'#ffffff',radius:16,padH:14,padV:9,shadowX:0,shadowY:0,shadowBlur:0,shadowColor:'#000000',shadowAlpha:0,borderW:0,borderColor:'#ffffff',borderAlpha:20,maxW:72};
+var recvDefaults={bg:'#ffffff',color:'#1a1a1f',radius:16,padH:14,padV:9,shadowX:0,shadowY:1,shadowBlur:3,shadowColor:'#000000',shadowAlpha:4,borderW:0,borderColor:'#000000',borderAlpha:5,maxW:72};
+
+document.getElementById('sentBubbleControls').innerHTML=buildBubbleControls('sent',sentDefaults)+makeSyncBtn('sent','recv','同步到接收气泡 →');
+document.getElementById('recvBubbleControls').innerHTML=buildBubbleControls('recv',recvDefaults)+makeSyncBtn('recv','sent','← 同步到发送气泡');
+
+// ═══ 头像控件 ═══
+document.getElementById('avatarControls').innerHTML=
+    makeSlider('尺寸','avSize',12,56,28)+
+    makeSlider('圆角','avRadius',0,50,50,'1','%')+
+    makeSlider('边框宽','avBorderW',0,5,0,'0.5')+
+    makeColor('边框色','avBorderColor','#ffffff')+
+    makeSubTitle('显示规则')+
+    makeSelect('对方头像','avRecvRule',[{v:'last',n:'仅最后一条'},{v:'first',n:'仅第一条'},{v:'all',n:'全部显示'},{v:'none',n:'全部隐藏'}],'last')+
+    makeSelect('我的头像','avSentRule',[{v:'none',n:'隐藏'},{v:'last',n:'仅最后一条'},{v:'all',n:'全部显示'}],'none');
+
+// ═══ 间距控件 ═══
+document.getElementById('spacingControls').innerHTML=
+    makeSlider('行间距','spRow',0,24,4)+
+    makeSlider('组间距','spGroup',0,40,8)+
+    makeSlider('气泡与头像','spAvGap',0,20,6)+
+    makeSlider('消息区内边距','spAreaPad',0,40,12);
+
+// ═══ 旁白控件 ═══
+document.getElementById('narrControls').innerHTML=
+    makeSlider('字号','narrSize',8,20,11)+
+    makeColor('文字色','narrColor','#1a1a1f')+
+    makeSlider('透明度','narrAlpha',5,100,35,'1','%')+
+    makeSlider('上下间距','narrPadV',0,40,8)+
+    makeSlider('左右间距','narrPadH',0,80,20)+
+    makeSlider('行高','narrLh',100,300,160)+
+    makeSelect('对齐','narrAlign',[{v:'center',n:'居中'},{v:'left',n:'左对齐'},{v:'right',n:'右对齐'}],'center')+
+    makeSelect('斜体','narrItalic',[{v:'italic',n:'是'},{v:'normal',n:'否'}],'italic')+
+    makeSubTitle('分隔线')+
+    makeSlider('上线宽','narrLineTop',0,3,0,'0.5')+
+    makeSlider('下线宽','narrLineBot',0,3,0,'0.5')+
+    makeColor('线色','narrLineColor','#1a1a1f')+
+    makeSlider('线透明度','narrLineAlpha',0,100,10,'1','%');
+
+// ═══ 顶栏控件 ═══
+document.getElementById('topbarControls').innerHTML=
+    makeColor('背景色','tbBg','#ffffff')+
+    makeSlider('背景透明','tbBgAlpha',0,100,100,'1','%')+
+    makeSlider('高度','tbHeight',36,120,56)+
+    makeSlider('底部线宽','tbBorderB',0,3,0.5,'0.5')+
+    makeColor('名字颜色','tbNameColor','#1a1a1f')+
+    makeSlider('名字字号','tbNameSize',10,22,13);
+
+// ═══ 底栏控件 ═══
+document.getElementById('inputbarControls').innerHTML=
+    makeColor('背景色','ibBg','#ffffff')+
+    makeSlider('背景透明','ibBgAlpha',0,100,100,'1','%')+
+    makeSlider('高度','ibHeight',36,80,52)+
+    makeSlider('输入框圆角','ibFieldRadius',0,30,18)+
+    makeColor('发送键背景','ibSendBg','#1a1a1f')+
+    makeSlider('发送键圆角','ibSendRadius',0,50,50,'1','%');
+
+// ═══ 字体控件 ═══
+document.getElementById('fontControls').innerHTML=
+    makeSlider('气泡字号','fontBubbleSize',10,24,13)+
+    makeSlider('行高','fontLh',100,300,155)+
+    '<div class="tg-sub-title">自定义字体</div>'+
+    '<div style="margin-bottom:10px;"><div class="tg-label" style="margin-bottom:6px;">字体 URL</div><input type="url" class="tg-ctrl" id="fontUrl" placeholder=".woff2 / .ttf / .css URL"></div>'+
+    '<div style="margin-bottom:10px;"><div class="tg-label" style="margin-bottom:6px;">字体名称</div><input type="text" class="tg-ctrl" id="fontName" placeholder="CustomFont"></div>'+
+    '<button id="fontLoadBtn" style="width:100%;height:38px;border-radius:50px;border:0.5px solid var(--border);background:transparent;color:var(--text2);font-size:10px;font-weight:700;cursor:pointer;">加载字体</button>'+
+    '<div id="fontStatus" style="margin-top:8px;font-size:9px;color:var(--text3);"></div>';
+
+// ═══ 背景控件 ═══
+document.getElementById('bgControls').innerHTML=
+    makeColor('消息区背景色','bgColor','#f0eeeb')+
+    '<div style="margin-top:14px;"><div class="tg-label" style="margin-bottom:6px;">背景图 URL</div><input type="url" class="tg-ctrl" id="bgUrl" placeholder="https://..."></div>'+
+    makeSlider('模糊','bgBlur',0,30,0)+
+    makeSlider('透明度','bgAlpha',0,100,100,'1','%');
+
+// ═══ 装饰图系统 ═══
+var decorItems=[];
+var decorCounter=0;
+
+function addDecorItem(){
+    var id=++decorCounter;
+    var item={id:id};
+    decorItems.push(item);
+    renderDecorList();
+}
+
+function removeDecorItem(id){
+    decorItems=decorItems.filter(function(d){return d.id!==id;});
+    renderDecorList();
+    applyPreview();
+}
+
+function renderDecorList(){
+    var list=document.getElementById('decorList');
+    var html='';
+    decorItems.forEach(function(item,i){
+        var p='decor'+item.id+'_';
+        html+='<div class="tg-acc'+(i===decorItems.length-1?' open':'')+'">';
+        html+='<div class="tg-acc-hd"><span class="tg-acc-title">装饰 #'+item.id+'</span><span class="tg-acc-badge">DECOR</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>';
+        html+='<div class="tg-acc-body"><div class="tg-acc-inner">';
+        html+='<div style="margin-bottom:12px;"><div class="tg-label" style="margin-bottom:6px;">图片 URL</div><input type="url" class="tg-ctrl" id="'+p+'url" placeholder="https://...png"></div>';
+        html+=makeSelect('应用到',p+'target',[{v:'sent-bubble',n:'发送气泡'},{v:'recv-bubble',n:'接收气泡'},{v:'body',n:'消息区'},{v:'narr',n:'旁白'},{v:'topbar',n:'顶栏'},{v:'inputbar',n:'底栏'}],'body');
+        html+=makeSelect('位置',p+'pos',[{v:'top-left',n:'左上'},{v:'top-right',n:'右上'},{v:'bottom-left',n:'左下'},{v:'bottom-right',n:'右下'},{v:'center',n:'中心'},{v:'custom',n:'自定义'}],'bottom-right');
+        html+=makeSlider('宽度',p+'w',5,300,40);
+        html+=makeSlider('高度',p+'h',5,300,40);
+        html+=makeSlider('X偏移',p+'x',-200,200,0);
+        html+=makeSlider('Y偏移',p+'y',-200,200,0);
+        html+=makeSlider('透明度',p+'alpha',0,100,100,'1','%');
+        html+=makeSlider('旋转',p+'rotate',0,360,0,'1','°');
+        html+=makeSlider('缩放',p+'scale',10,400,100,'1','%');
+        html+=makeSyncBtn(p,'__mirror__','同步镜像到对方 ↔');
+        html+='<div class="tg-decor-del" onclick="window._removeDecor('+item.id+')">×</div>';
+        html+='</div></div></div>';
+    });
+    list.innerHTML=html;
+    bindAllControls();
+}
+
+window._removeDecor=removeDecorItem;
+document.getElementById('decorAddBtn').addEventListener('click',addDecorItem);
+
+// ═══ 绑定所有控件 ═══
+function bindAllControls(){
+    document.querySelectorAll('.tg-ctrl').forEach(function(el){
+        var evType=el.tagName==='SELECT'?'change':(el.type==='color'?'input':'input');
+        el.removeEventListener(evType,onCtrlChange);
+        el.addEventListener(evType,onCtrlChange);
+    });
+}
+
+function onCtrlChange(e){
+    var el=e.target;
+    if(el.type==='range'){
+        var valEl=document.getElementById(el.id+'Val');
+        if(valEl)valEl.textContent=el.value+(el.dataset.suffix||'');
+    }
+    applyPreview();
+}
+
+// ═══ 同步按钮 ═══
+document.addEventListener('click',function(e){
+    var syncBtn=e.target.closest('.tg-sync-btn');
+    if(!syncBtn)return;
+    var from=syncBtn.dataset.syncFrom;
+    var to=syncBtn.dataset.syncTo;
+    if(!from||!to)return;
+
+    if(to==='__mirror__'){
+        // 装饰图镜像同步
+        handleDecorMirrorSync(from);
+        return;
+    }
+
+    // 气泡同步
+    var fields=['Bg','Color','Radius','PadH','PadV','ShadowX','ShadowY','ShadowBlur','ShadowColor','ShadowAlpha','BorderW','BorderColor','BorderAlpha','MaxW'];
+    fields.forEach(function(f){
+        var srcEl=document.getElementById(from+f);
+        var dstEl=document.getElementById(to+f);
+        if(srcEl&&dstEl){
+            dstEl.value=srcEl.value;
+            var valEl=document.getElementById(to+f+'Val');
+            if(valEl){
+                var srcValEl=document.getElementById(from+f+'Val');
+                if(srcValEl)valEl.textContent=srcValEl.textContent;
+            }
+        }
+    });
+    applyPreview();
+    showToast('已同步');
+});
+
+function handleDecorMirrorSync(fromPrefix){
+    // 查找fromPrefix对应的装饰图item
+    var srcId=parseInt(fromPrefix.replace('decor','').replace('_',''),10);
+    var srcItem=decorItems.find(function(d){return d.id===srcId;});
+    if(!srcItem)return;
+    // 读取源参数
+    var url=(document.getElementById(fromPrefix+'url')||{}).value||'';
+    var target=(document.getElementById(fromPrefix+'target')||{}).value||'body';
+    // 自动反转target
+    var mirrorTarget=target;
+    if(target==='sent-bubble')mirrorTarget='recv-bubble';
+    else if(target==='recv-bubble')mirrorTarget='sent-bubble';
+    // 创建镜像装饰
+    addDecorItem();
+    var newItem=decorItems[decorItems.length-1];
+    var np='decor'+newItem.id+'_';
+    // 等DOM渲染后设置值
+    setTimeout(function(){
+        var fields=['w','h','alpha','rotate','scale'];
+        fields.forEach(function(f){
+            var src=document.getElementById(fromPrefix+f);
+            var dst=document.getElementById(np+f);
+            if(src&&dst){dst.value=src.value;var vEl=document.getElementById(np+f+'Val');if(vEl){var svEl=document.getElementById(fromPrefix+f+'Val');if(svEl)vEl.textContent=svEl.textContent;}}
+        });
+        // 镜像X偏移
+        var srcX=document.getElementById(fromPrefix+'x');
+        var dstX=document.getElementById(np+'x');
+        if(srcX&&dstX){dstX.value=-parseInt(srcX.value);var vx=document.getElementById(np+'xVal');if(vx)vx.textContent=dstX.value;}
+        // Y保持
+        var srcY=document.getElementById(fromPrefix+'y');
+        var dstY=document.getElementById(np+'y');
+        if(srcY&&dstY){dstY.value=srcY.value;var vy=document.getElementById(np+'yVal');if(vy)vy.textContent=dstY.value;}
+        // URL和target
+        var urlEl=document.getElementById(np+'url');if(urlEl)urlEl.value=url;
+        var tgtEl=document.getElementById(np+'target');if(tgtEl)tgtEl.value=mirrorTarget;
+        // 位置镜像
+        var srcPos=document.getElementById(fromPrefix+'pos');
+        var dstPos=document.getElementById(np+'pos');
+        if(srcPos&&dstPos){
+            var posMap={'top-left':'top-right','top-right':'top-left','bottom-left':'bottom-right','bottom-right':'bottom-left','center':'center','custom':'custom'};
+            dstPos.value=posMap[srcPos.value]||srcPos.value;
+        }
+        applyPreview();
+        showToast('已镜像同步');
+    },50);
+}
+
+// ═══ 辅助 ═══
+function hexToRgba(hex,alpha){
+    var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return 'rgba('+r+','+g+','+b+','+(alpha/100)+')';
+}
+function gv(id){var el=document.getElementById(id);return el?el.value:'';}
+function gvn(id){return parseFloat(gv(id))||0;}
+
+// ═══ 实时预览 ═══
+function applyPreview(){
+    var styleId='tg-live-style';
+    var existing=document.getElementById(styleId);
+    if(existing)existing.parentNode.removeChild(existing);
+    var css=generateCSS(true);
+    var s=document.createElement('style');
+    s.id=styleId;
+    s.textContent=css;
+    document.head.appendChild(s);
+}
+
+// ═══ 生成CSS ═══
+function generateCSS(forPreview){
+    var P=forPreview?'.tg-chat ':'#chatDetailAlt ';
+    var css='/* Theme Generated by Theme Generator */\n\n';
+
+    // 气泡
+    ['sent','recv'].forEach(function(side){
+        var pre=side==='sent'?'sent':'recv';
+        var sel=side==='sent'?'.cda-msg-row.sent':'.cda-msg-row.received';
+        var bg=gv(pre+'Bg'),color=gv(pre+'Color'),radius=gvn(pre+'Radius');
+        var padH=gvn(pre+'PadH'),padV=gvn(pre+'PadV');
+        var sx=gvn(pre+'ShadowX'),sy=gvn(pre+'ShadowY'),sb=gvn(pre+'ShadowBlur');
+        var sc=gv(pre+'ShadowColor'),sa=gvn(pre+'ShadowAlpha');
+        var bw=gvn(pre+'BorderW'),bc=gv(pre+'BorderColor'),ba=gvn(pre+'BorderAlpha');
+        var mw=gvn(pre+'MaxW');
+
+        css+=P+sel+' .cda-bubble{\n';
+        css+='  background:'+bg+'!important;\n  color:'+color+'!important;\n';
+        css+='  border-radius:'+radius+'px!important;\n';
+        css+='  padding:'+padV+'px '+padH+'px!important;\n';
+        if(sb>0||sy>0)css+='  box-shadow:'+sx+'px '+sy+'px '+sb+'px '+hexToRgba(sc,sa)+'!important;\n';
+        else css+='  box-shadow:none!important;\n';
+        if(bw>0)css+='  border:'+bw+'px solid '+hexToRgba(bc,ba)+'!important;\n';
+        css+='}\n';
+        css+=P+sel+' .cda-bubble-wrap{max-width:'+mw+'%!important;}\n\n';
+    });
+
+    // 头像
+    css+=P+'.cda-msg-av{width:'+gvn('avSize')+'px!important;height:'+gvn('avSize')+'px!important;border-radius:'+gvn('avRadius')+'%!important;';
+    if(gvn('avBorderW')>0)css+='border:'+gvn('avBorderW')+'px solid '+gv('avBorderColor')+'!important;';
+    css+='}\n';
+    var avRecv=gv('avRecvRule'),avSent=gv('avSentRule');
+    if(avRecv==='none')css+=P+'.cda-msg-row.received .cda-msg-av{display:none!important;}\n';
+    else if(avRecv==='all')css+=P+'.cda-msg-row.received .cda-msg-av.hidden{visibility:visible!important;}\n';
+    if(avSent==='none'){}
+    else if(avSent==='last'||avSent==='all')css+=P+'.cda-msg-row.sent .cda-sent-av{display:flex!important;}\n';
+    css+='\n';
+
+    // 间距
+    css+=P+'.cda-msg-row{padding:'+Math.round(gvn('spRow')/2)+'px 0!important;gap:'+gvn('spAvGap')+'px!important;}\n';
+    css+=P+'.cda-msg-row.group-start{margin-top:'+gvn('spGroup')+'px!important;}\n';
+    css+=(forPreview?'.tg-chat-body':P+'.cda-messages')+'{padding:'+gvn('spAreaPad')+'px!important;}\n\n';
+
+    // 旁白
+    var narrLh=(gvn('narrLh')/100).toFixed(2);
+    css+=P+'.cda-narr-line{\n';
+    css+='  font-size:'+gvn('narrSize')+'px!important;\n';
+    css+='  color:'+hexToRgba(gv('narrColor'),gvn('narrAlpha'))+'!important;\n';
+    css+='  padding:'+gvn('narrPadV')+'px '+gvn('narrPadH')+'px!important;\n';
+    css+='  line-height:'+narrLh+'!important;\n';
+    css+='  text-align:'+gv('narrAlign')+'!important;\n';
+    css+='  font-style:'+gv('narrItalic')+'!important;\n';
+    if(gvn('narrLineTop')>0)css+='  border-top:'+gvn('narrLineTop')+'px solid '+hexToRgba(gv('narrLineColor'),gvn('narrLineAlpha'))+'!important;\n';
+    if(gvn('narrLineBot')>0)css+='  border-bottom:'+gvn('narrLineBot')+'px solid '+hexToRgba(gv('narrLineColor'),gvn('narrLineAlpha'))+'!important;\n';
+    css+='}\n\n';
+
+    // 顶栏
+    var tbSel=forPreview?'.tg-chat-topbar':P+'.cda-topbar';
+    var tbNameSel=forPreview?'.tg-chat-topbar-name':P+'.cda-topbar-name';
+    css+=tbSel+'{background:'+hexToRgba(gv('tbBg'),gvn('tbBgAlpha'))+'!important;min-height:'+gvn('tbHeight')+'px!important;border-bottom:'+gvn('tbBorderB')+'px solid rgba(0,0,0,0.05)!important;}\n';
+    css+=tbNameSel+'{color:'+gv('tbNameColor')+'!important;font-size:'+gvn('tbNameSize')+'px!important;}\n\n';
+
+    // 底栏
+    var ibSel=forPreview?'.tg-chat-input':P+'.cda-input-bar';
+    css+=ibSel+'{background:'+hexToRgba(gv('ibBg'),gvn('ibBgAlpha'))+'!important;min-height:'+gvn('ibHeight')+'px!important;}\n';
+    css+=(forPreview?'.tg-chat-input-field':P+'.cda-input-field')+'{border-radius:'+gvn('ibFieldRadius')+'px!important;}\n';
+    css+=(forPreview?'.tg-chat-input-send':P+'.cda-input-send')+'{background:'+gv('ibSendBg')+'!important;border-radius:'+gvn('ibSendRadius')+'%!important;}\n\n';
+
+    // 字体
+    var fSize=gvn('fontBubbleSize'),fLh=(gvn('fontLh')/100).toFixed(2);
+    var fName=gv('fontName').trim();
+    css+=P+'.cda-bubble{font-size:'+fSize+'px!important;line-height:'+fLh+'!important;}\n';
+    if(fName){
+        var fk='"'+fName+'",-apple-system,BlinkMacSystemFont,sans-serif';
+        css+=P+'.cda-bubble{font-family:'+fk+'!important;}\n';
+        css+=P+'.cda-narr-line{font-family:'+fk+'!important;}\n';
+    }
+    css+='\n';
+
+    // 背景
+    var bgUrl=gv('bgUrl').trim();
+    css+=(forPreview?'.tg-chat-body':P+'.cda-messages')+'{background:'+gv('bgColor')+'!important;}\n';
+    if(bgUrl){
+        if(forPreview){
+            css+='.tg-chat-body{background-image:url('+bgUrl+')!important;background-size:cover!important;background-position:center!important;}\n';
+        }else{
+            css+=P+'.cda-messages::before{content:"";position:fixed;inset:0;max-width:430px;margin:0 auto;z-index:0;pointer-events:none;background-image:url('+bgUrl+');background-size:cover;background-position:center;filter:blur('+gvn('bgBlur')+'px);opacity:'+(gvn('bgAlpha')/100)+';}\n';
+            css+=P+'.cda-messages>*{position:relative;z-index:1;}\n';
+        }
+    }
+    css+='\n';
+
+    // 装饰图
+    decorItems.forEach(function(item){
+        var p='decor'+item.id+'_';
+        var url=gv(p+'url').trim();
+        if(!url)return;
+        var target=gv(p+'target');
+        var pos=gv(p+'pos');
+        var w=gvn(p+'w'),h=gvn(p+'h');
+        var x=gvn(p+'x'),y=gvn(p+'y');
+        var alpha=(gvn(p+'alpha')/100).toFixed(2);
+        var rotate=gvn(p+'rotate');
+        var scale=(gvn(p+'scale')/100).toFixed(2);
+
+        var posCSS='';
+        if(pos==='top-left')posCSS='top:'+y+'px;left:'+x+'px;';
+        else if(pos==='top-right')posCSS='top:'+y+'px;right:'+(-x)+'px;';
+        else if(pos==='bottom-left')posCSS='bottom:'+(-y)+'px;left:'+x+'px;';
+        else if(pos==='bottom-right')posCSS='bottom:'+(-y)+'px;right:'+(-x)+'px;';
+        else if(pos==='center')posCSS='top:50%;left:50%;margin-top:'+y+'px;margin-left:'+x+'px;';
+        else posCSS='top:'+y+'px;left:'+x+'px;';
+        var transformCSS='transform:'+(pos==='center'?'translate(-50%,-50%) ':'')+'rotate('+rotate+'deg) scale('+scale+');';
+
+        var targetMap={
+            'sent-bubble':P+'.cda-msg-row.sent .cda-bubble',
+            'recv-bubble':P+'.cda-msg-row.received .cda-bubble',
+            'body':(forPreview?'.tg-chat-body':P+'.cda-messages'),
+            'narr':P+'.cda-narr-line',
+            'topbar':(forPreview?'.tg-chat-topbar':P+'.cda-topbar'),
+            'inputbar':(forPreview?'.tg-chat-input':P+'.cda-input-bar')
+        };
+        var sel=targetMap[target];
+        if(!sel)return;
+        // 用nth装饰区分多个
+        var pseudoIdx=decorItems.filter(function(d){return d.id<=item.id&&gv('decor'+d.id+'_target')===target;}).length;
+        var pseudo=pseudoIdx<=1?'::after':'::before';
+
+        css+=sel+'{position:relative!important;overflow:visible!important;}\n';
+        css+=sel+pseudo+'{\n';
+        css+='  content:""!important;position:absolute!important;'+posCSS+'\n';
+        css+='  width:'+w+'px!important;height:'+h+'px!important;\n';
+        css+='  background-image:url('+url+')!important;background-size:contain!important;background-repeat:no-repeat!important;\n';
+        css+='  opacity:'+alpha+'!important;'+transformCSS+'\n';
+        css+='  pointer-events:none!important;z-index:0!important;\n';
+        css+='}\n\n';
+    });
+
+    return css;
+}
+
+// ═══ 初始绑定 ═══
+bindAllControls();
+applyPreview();
+
+// ═══ 字体加载 ═══
+document.addEventListener('click',function(e){
+    if(e.target.id!=='fontLoadBtn')return;
+    var url=gv('fontUrl').trim();
+    var name=gv('fontName').trim()||'CustomThemeFont';
+    var status=document.getElementById('fontStatus');
+    if(!url){status.textContent='请输入URL';status.style.color='#c0392b';return;}
+    status.textContent='加载中...';status.style.color='var(--text3)';
+    if(window.FontFace){
+        var ff=new FontFace(name,'url('+url+')');
+        ff.load().then(function(loaded){
+            document.fonts.add(loaded);
+            document.getElementById('fontName').value=name;
+            status.textContent='✓ 加载成功：'+name;
+            status.style.color='#27ae60';
+            applyPreview();
+        }).catch(function(err){
+            status.textContent='✗ 失败：'+err.message;
+            status.style.color='#c0392b';
+        });
+    }
+});
+
+// ═══ 导出 ═══
+document.getElementById('tgExport').addEventListener('click',function(){
+    var css=generateCSS(false);
+    document.getElementById('tgOutputCode').value=css;
+    document.getElementById('tgOutputOverlay').classList.add('active');
+});
+document.getElementById('tgOutputBg').addEventListener('click',function(){document.getElementById('tgOutputOverlay').classList.remove('active');});
+document.getElementById('tgOutputClose').addEventListener('click',function(){document.getElementById('tgOutputOverlay').classList.remove('active');});
+document.getElementById('tgOutputCopy').addEventListener('click',function(){
+    var code=document.getElementById('tgOutputCode');
+    code.select();code.setSelectionRange(0,99999);
+    document.execCommand('copy');
+    showToast('已复制');
+});
+document.getElementById('tgReset').addEventListener('click',function(){
+    if(confirm('重置？'))location.reload();
+});
+
+function showToast(msg){
+    var t=document.getElementById('tgToast');
+    t.textContent=msg;t.classList.add('show');
+    setTimeout(function(){t.classList.remove('show');},1500);
+}
+
+})();
+</script>
+</body>
+</html>
