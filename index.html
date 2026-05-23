@@ -93,8 +93,9 @@ select{background:rgba(255,255,255,0.06);border:0.5px solid var(--border);border
 .tg-label{font-size:11px;color:var(--text2);min-width:70px;flex-shrink:0;}
 .tg-val{font-family:monospace;font-size:11px;color:#fff;min-width:36px;text-align:right;flex-shrink:0;}
 .tg-slider{flex:1;}
-.tg-color-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-.tg-color-label{font-size:11px;color:var(--text2);flex:1;}
+.tg-color-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.tg-color-label{font-size:11px;color:var(--text2);flex:1;min-width:60px;}
+.tg-text-linked{flex:0 0 auto!important;width:90px!important;height:36px;padding:6px 8px!important;border-radius:8px!important;font-size:10px!important;}
 .tg-sub-title{font-size:8px;font-weight:800;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin:16px 0 12px;padding-top:12px;border-top:0.5px solid var(--border);}
 
 /* ═══ Sync Button ═══ */
@@ -107,6 +108,7 @@ select{background:rgba(255,255,255,0.06);border:0.5px solid var(--border);border
 .tg-decor-del{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--text3);}
 .tg-decor-add{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:12px;border:1px dashed rgba(255,255,255,0.1);background:transparent;color:var(--text3);font-size:10px;font-weight:700;cursor:pointer;transition:all 0.2s;}
 .tg-decor-add:active{background:rgba(255,255,255,0.04);}
+
 
 /* ═══ Export Bar ═══ */
 .tg-export-bar{position:fixed;bottom:0;left:0;right:0;padding:12px 16px;background:linear-gradient(180deg,transparent 0%,var(--bg) 30%);display:flex;gap:8px;z-index:200;}
@@ -181,7 +183,7 @@ select{background:rgba(255,255,255,0.06);border:0.5px solid var(--border);border
     <div class="tg-acc" id="accBubbleTails">
         <div class="tg-acc-hd"><span class="tg-acc-title">气泡尾巴 · Bubble Tails</span><span class="tg-acc-badge">TAIL</span><svg class="tg-acc-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
         <div class="tg-acc-body"><div class="tg-acc-inner">
-            <div style="font-size:9px;color:var(--text3);margin-bottom:12px;line-height:1.5;">给气泡角落添加自定义图片尾巴，不限数量。每个可独立控制位置和大小。</div>
+            <div style="font-size:9px;color:var(--text3);margin-bottom:12px;line-height:1.5;">给气泡角落焊接自定义图片尾巴。选择焊接点后图片会自动对齐到气泡角落，用微调做精细位移。导出时每侧最多2个。</div>
             <div id="tailList"></div>
             <div class="tg-decor-add" id="tailAddBtn">+ 添加气泡尾巴</div>
         </div></div>
@@ -245,7 +247,8 @@ select{background:rgba(255,255,255,0.06);border:0.5px solid var(--border);border
 <!-- Export -->
 <div class="tg-export-bar">
     <button class="tg-export-btn ghost" id="tgReset">Reset</button>
-    <button class="tg-export-btn primary" id="tgExport">合并导出 CSS</button>
+    <button class="tg-export-btn ghost" id="tgImport">导入</button>
+    <button class="tg-export-btn primary" id="tgExport">导出</button>
 </div>
 
 <div class="tg-output-overlay" id="tgOutputOverlay">
@@ -256,6 +259,18 @@ select{background:rgba(255,255,255,0.06);border:0.5px solid var(--border);border
         <div class="tg-output-btns">
             <button style="background:transparent;border:0.5px solid var(--border);color:var(--text2);" id="tgOutputClose">关闭</button>
             <button style="background:#fff;color:#000;" id="tgOutputCopy">复制代码</button>
+        </div>
+    </div>
+</div>
+
+<div class="tg-output-overlay" id="tgImportOverlay">
+    <div class="tg-output-bg" id="tgImportBg"></div>
+    <div class="tg-output-card">
+        <div class="tg-output-title">导入已有 CSS · 自动回填控件</div>
+        <textarea class="tg-output-code" id="tgImportCode" placeholder="粘贴你之前导出的 CSS 代码到这里..." readonly onfocus="this.removeAttribute('readonly')"></textarea>
+        <div class="tg-output-btns">
+            <button style="background:transparent;border:0.5px solid var(--border);color:var(--text2);" id="tgImportClose">关闭</button>
+            <button style="background:#fff;color:#000;" id="tgImportApply">解析并应用</button>
         </div>
     </div>
 </div>
@@ -311,6 +326,7 @@ function renderMockChat(){
         var classes='cda-msg-row '+m.type;
         if(isLast)classes+=' has-tail';
         if(isGroupStart)classes+=' group-start';
+        if(isLast)classes+=' group-last';
         var avHtml='';
         if(m.type==='received'){
             avHtml=isLast?'<div class="cda-msg-av">K</div>':'<div class="cda-msg-av hidden">K</div>';
@@ -352,7 +368,7 @@ function makeSlider(label,id,min,max,val,step,suffix){
     return '<div class="tg-row"><span class="tg-label">'+label+'</span><input type="range" class="tg-slider tg-ctrl" id="'+id+'" min="'+min+'" max="'+max+'" value="'+val+'" step="'+(step||1)+'" data-suffix="'+(suffix||'')+'"><span class="tg-val" id="'+id+'Val">'+val+(suffix||'')+'</span></div>';
 }
 function makeColor(label,id,val){
-    return '<div class="tg-color-row"><span class="tg-color-label">'+label+'</span><input type="color" class="tg-ctrl" id="'+id+'" value="'+val+'"></div>';
+    return '<div class="tg-color-row"><span class="tg-color-label">'+label+'</span><input type="color" class="tg-ctrl tg-color-linked" id="'+id+'" value="'+val+'" data-link="'+id+'Text"><input type="text" class="tg-ctrl tg-text-linked" id="'+id+'Text" value="'+val+'" data-link="'+id+'" style="width:90px;margin-left:8px;font-family:monospace;font-size:10px;"></div>';
 }
 function makeSelect(label,id,options,selected){
     var h='<div class="tg-row"><span class="tg-label">'+label+'</span><select class="tg-ctrl" id="'+id+'">';
@@ -406,14 +422,22 @@ document.getElementById('avatarControls').innerHTML=
     makeColor('边框色','avBorderColor','#ffffff')+
     makeSubTitle('显示规则')+
     makeSelect('对方头像','avRecvRule',[{v:'last',n:'仅最后一条'},{v:'first',n:'仅第一条'},{v:'all',n:'全部显示'},{v:'none',n:'全部隐藏'}],'last')+
-    makeSelect('我的头像','avSentRule',[{v:'none',n:'隐藏'},{v:'last',n:'仅最后一条'},{v:'all',n:'全部显示'}],'none');
+    makeSelect('我的头像','avSentRule',[{v:'none',n:'隐藏'},{v:'last',n:'仅最后一条'},{v:'all',n:'全部显示'}],'none')+
+    makeSubTitle('头像位置')+
+    makeSelect('垂直对齐','avAlign',[{v:'flex-end',n:'底部对齐(默认)'},{v:'flex-start',n:'顶部对齐'},{v:'center',n:'居中对齐'}],'flex-end')+
+    makeSlider('头像上移','avOffsetY',0,50,0)+
+    '<div style="font-size:8px;color:var(--text3);margin-top:4px;line-height:1.4;">上移：让头像从底部基线往上偏移。长消息时头像会在气泡中上部。</div>'+
+    '<div style="font-size:8px;color:var(--text3);margin-top:8px;line-height:1.4;">⚠ 发送方头像「全部显示」需要目标平台JS支持(avatarConfig.sent=true)。如果不生效，请在平台设置中开启「显示我的头像」。</div>';
 
 // ═══ 间距控件 ═══
 document.getElementById('spacingControls').innerHTML=
     makeSlider('行间距','spRow',0,24,4)+
     makeSlider('组间距','spGroup',0,40,8)+
-    makeSlider('气泡与头像','spAvGap',0,20,6)+
-    makeSlider('消息区内边距','spAreaPad',0,40,12);
+    makeSlider('气泡与头像(水平)','spAvGap',0,20,6)+
+    makeSlider('消息区内边距','spAreaPad',0,40,12)+
+    makeSubTitle('气泡与头像间距(独立)')+
+    makeSlider('对方头像-气泡间距','spRecvAvGap',0,30,6)+
+    makeSlider('我的头像-气泡间距','spSentAvGap',0,30,6);
 
 // ═══ 旁白控件 ═══
 document.getElementById('narrControls').innerHTML=
@@ -503,15 +527,48 @@ document.getElementById('bgControls').innerHTML=
 var tailItems=[];
 var tailCounter=0;
 
+function saveTailValues(){
+    tailItems.forEach(function(item){
+        var p='tail'+item.id+'_';
+        var fields=['url','target','weld','size','x','y','alpha','rotate','flipH','flipV'];
+        fields.forEach(function(f){
+            var el=document.getElementById(p+f);
+            if(el)item['_'+f]=el.value;
+        });
+    });
+}
+
+function restoreTailValues(){
+    tailItems.forEach(function(item){
+        var p='tail'+item.id+'_';
+        var fields=['url','target','weld','size','x','y','alpha','rotate','flipH','flipV'];
+        fields.forEach(function(f){
+            var el=document.getElementById(p+f);
+            if(el&&item['_'+f]!==undefined){
+                el.value=item['_'+f];
+                var valEl=document.getElementById(p+f+'Val');
+                if(valEl){
+                    var suffix=el.dataset&&el.dataset.suffix?el.dataset.suffix:'';
+                    valEl.textContent=item['_'+f]+suffix;
+                }
+            }
+        });
+    });
+}
+
 function addTailItem(){
+    saveTailValues();
     var id=++tailCounter;
     tailItems.push({id:id});
     renderTailList();
+    restoreTailValues();
 }
 
 function removeTailItem(id){
+    saveTailValues();
     tailItems=tailItems.filter(function(t){return t.id!==id;});
     renderTailList();
+    restoreTailValues();
     applyPreview();
 }
 
@@ -525,14 +582,15 @@ function renderTailList(){
         html+='<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:10px;">尾巴 #'+item.id+'</div>';
         html+='<div style="margin-bottom:10px;"><div class="tg-label" style="margin-bottom:6px;">图片 URL</div><input type="url" class="tg-ctrl" id="'+p+'url" placeholder="https://...png"></div>';
         html+=makeSelect('应用到',p+'target',[{v:'sent',n:'发送气泡'},{v:'recv',n:'接收气泡'},{v:'both',n:'双方气泡'}],'sent');
-        html+=makeSelect('位置',p+'pos',[{v:'top-left',n:'左上角'},{v:'top-right',n:'右上角'},{v:'bottom-left',n:'左下角'},{v:'bottom-right',n:'右下角'}],'bottom-right');
-        html+=makeSlider('宽度',p+'w',5,80,20);
-        html+=makeSlider('高度',p+'h',5,80,20);
-        html+=makeSlider('X微调',p+'x',-50,50,0);
-        html+=makeSlider('Y微调',p+'y',-50,50,0);
+        html+=makeSelect('焊接位置',p+'weld',[{v:'sent-br',n:'发送·右下角(默认尾巴位)'},{v:'sent-bl',n:'发送·左下角'},{v:'sent-tr',n:'发送·右上角'},{v:'sent-tl',n:'发送·左上角'},{v:'recv-bl',n:'接收·左下角(默认尾巴位)'},{v:'recv-br',n:'接收·右下角'},{v:'recv-tl',n:'接收·左上角'},{v:'recv-tr',n:'接收·右上角'}],'sent-br');
+        html+=makeSlider('尺寸',p+'size',8,60,18);
+        html+=makeSlider('X微调',p+'x',-30,30,0);
+        html+=makeSlider('Y微调',p+'y',-30,30,0);
         html+=makeSlider('透明度',p+'alpha',0,100,100,'1','%');
-        html+=makeSlider('旋转',p+'rotate',0,360,0,'1','°');
-        html+=makeSyncBtn(p,'__tairmirror__','同步镜像到对方 ↔');
+        html+=makeSlider('旋转',p+'rotate',-180,180,0,'1','°');
+        html+=makeSelect('水平翻转',p+'flipH',[{v:'none',n:'不翻转'},{v:'flip',n:'水平翻转'}],'none');
+        html+=makeSelect('垂直翻转',p+'flipV',[{v:'none',n:'不翻转'},{v:'flip',n:'垂直翻转'}],'none');
+        html+=makeSyncBtn(p,'__tairmirror__','镜像复制到对方 ↔');
         html+='</div>';
     });
     list.innerHTML=html;
@@ -548,16 +606,49 @@ document.addEventListener('click',function(e){
 var decorItems=[];
 var decorCounter=0;
 
+function saveDecorValues(){
+    decorItems.forEach(function(item){
+        var p='decor'+item.id+'_';
+        var fields=['url','target','pos','w','h','x','y','alpha','rotate','scale'];
+        fields.forEach(function(f){
+            var el=document.getElementById(p+f);
+            if(el)item['_'+f]=el.value;
+        });
+    });
+}
+
+function restoreDecorValues(){
+    decorItems.forEach(function(item){
+        var p='decor'+item.id+'_';
+        var fields=['url','target','pos','w','h','x','y','alpha','rotate','scale'];
+        fields.forEach(function(f){
+            var el=document.getElementById(p+f);
+            if(el&&item['_'+f]!==undefined){
+                el.value=item['_'+f];
+                var valEl=document.getElementById(p+f+'Val');
+                if(valEl){
+                    var suffix=el.dataset&&el.dataset.suffix?el.dataset.suffix:'';
+                    valEl.textContent=item['_'+f]+suffix;
+                }
+            }
+        });
+    });
+}
+
 function addDecorItem(){
+    saveDecorValues();
     var id=++decorCounter;
     var item={id:id};
     decorItems.push(item);
     renderDecorList();
+    restoreDecorValues();
 }
 
 function removeDecorItem(id){
+    saveDecorValues();
     decorItems=decorItems.filter(function(d){return d.id!==id;});
     renderDecorList();
+    restoreDecorValues();
     applyPreview();
 }
 
@@ -599,25 +690,40 @@ function handleTailMirrorSync(fromPrefix){
     var newItem=tailItems[tailItems.length-1];
     var np='tail'+newItem.id+'_';
     setTimeout(function(){
-        var fields=['w','h','alpha','rotate'];
+        // 复制尺寸、透明度、旋转
+        var fields=['size','alpha','rotate'];
         fields.forEach(function(f){
             var src=document.getElementById(fromPrefix+f);
             var dst=document.getElementById(np+f);
             if(src&&dst){dst.value=src.value;var vEl=document.getElementById(np+f+'Val');if(vEl){var svEl=document.getElementById(fromPrefix+f+'Val');if(svEl)vEl.textContent=svEl.textContent;}}
         });
+        // X镜像反转，Y保持
         var srcX=document.getElementById(fromPrefix+'x');
         var dstX=document.getElementById(np+'x');
         if(srcX&&dstX){dstX.value=-parseInt(srcX.value);var vx=document.getElementById(np+'xVal');if(vx)vx.textContent=dstX.value;}
         var srcY=document.getElementById(fromPrefix+'y');
         var dstY=document.getElementById(np+'y');
         if(srcY&&dstY){dstY.value=srcY.value;var vy=document.getElementById(np+'yVal');if(vy)vy.textContent=dstY.value;}
+        // URL和target
         var urlEl=document.getElementById(np+'url');if(urlEl)urlEl.value=url;
         var tgtEl=document.getElementById(np+'target');if(tgtEl)tgtEl.value=mirrorTarget;
-        var srcPos=(document.getElementById(fromPrefix+'pos')||{}).value||'bottom-right';
-        var dstPos=document.getElementById(np+'pos');
-        if(dstPos){
-            var posMap={'top-left':'top-right','top-right':'top-left','bottom-left':'bottom-right','bottom-right':'bottom-left'};
-            dstPos.value=posMap[srcPos]||srcPos;
+        // 焊接位置镜像：sent-br → recv-bl, sent-bl → recv-br 等
+        var srcWeld=(document.getElementById(fromPrefix+'weld')||{}).value||'sent-br';
+        var dstWeld=document.getElementById(np+'weld');
+        if(dstWeld){
+            var weldMap={'sent-br':'recv-bl','sent-bl':'recv-br','sent-tr':'recv-tl','sent-tl':'recv-tr','recv-bl':'sent-br','recv-br':'sent-bl','recv-tl':'sent-tr','recv-tr':'sent-tl'};
+            dstWeld.value=weldMap[srcWeld]||srcWeld;
+        }
+        // 翻转镜像
+        var srcFlipH=document.getElementById(fromPrefix+'flipH');
+        var dstFlipH=document.getElementById(np+'flipH');
+        if(srcFlipH&&dstFlipH){
+            dstFlipH.value=srcFlipH.value==='none'?'flip':'none';
+        }
+        var srcFlipV=document.getElementById(fromPrefix+'flipV');
+        var dstFlipV=document.getElementById(np+'flipV');
+        if(srcFlipV&&dstFlipV){
+            dstFlipV.value=srcFlipV.value;
         }
         applyPreview();
         showToast('尾巴已镜像');
@@ -631,6 +737,36 @@ function bindAllControls(){
         el.removeEventListener(evType,onCtrlChange);
         el.addEventListener(evType,onCtrlChange);
     });
+    document.querySelectorAll('.tg-color-linked').forEach(function(el){
+        el.removeEventListener('input',onColorLinkedChange);
+        el.addEventListener('input',onColorLinkedChange);
+    });
+    document.querySelectorAll('.tg-text-linked').forEach(function(el){
+        el.removeEventListener('input',onTextLinkedChange);
+        el.removeEventListener('change',onTextLinkedChange);
+        el.addEventListener('input',onTextLinkedChange);
+        el.addEventListener('change',onTextLinkedChange);
+    });
+}
+
+function onColorLinkedChange(e){
+    var linkId=e.target.dataset.link;
+    if(linkId){
+        var textEl=document.getElementById(linkId);
+        if(textEl)textEl.value=e.target.value;
+    }
+}
+
+function onTextLinkedChange(e){
+    var val=e.target.value.trim();
+    var linkId=e.target.dataset.link;
+    if(linkId){
+        var colorEl=document.getElementById(linkId);
+        if(colorEl&&/^#[0-9a-fA-F]{6}$/.test(val)){
+            colorEl.value=val;
+        }
+    }
+    applyPreview();
 }
 
 function onCtrlChange(e){
@@ -744,6 +880,134 @@ function applyPreview(){
     document.head.appendChild(s);
 }
 
+function injectTailElements(tailsByTarget){
+    var body=document.getElementById('tgChatBody');
+    if(!body)return;
+    body.querySelectorAll('.tg-tail-el').forEach(function(el){el.remove();});
+    ['sent','recv'].forEach(function(side){
+        var tails=tailsByTarget[side];
+        if(!tails||tails.length===0)return;
+        var cssClass=side==='sent'?'sent':'received';
+        var bubbles=body.querySelectorAll('.cda-msg-row.'+cssClass+' .cda-bubble');
+        bubbles.forEach(function(bubble){
+            tails.forEach(function(td){
+                var cls='tg-tail-'+side+'-'+td.id;
+                if(!bubble.querySelector('.'+cls)){
+                    var el=document.createElement('span');
+                    el.className=cls+' tg-tail-el';
+                    bubble.style.overflow='visible';
+                    bubble.style.position='relative';
+                    bubble.appendChild(el);
+                }
+            });
+        });
+    });
+}
+
+function injectLabelElements(){
+    var body=document.getElementById('tgChatBody');
+    if(!body)return;
+    body.querySelectorAll('.tg-label-el').forEach(function(el){el.remove();});
+    // 重置 side 类标签设置的 bubble-wrap 内联样式
+    body.querySelectorAll('.cda-bubble-wrap').forEach(function(el){
+        if(el.dataset.tsStyle){
+            el.style.display='';el.style.alignItems='';el.style.gap='';
+            delete el.dataset.tsStyle;
+        }
+    });
+    if(labelItems.length===0)return;
+
+    labelItems.forEach(function(item){
+        var p='label'+item.id+'_';
+        var labelType=gv(p+'type')||'fixed';
+        var text='';
+        if(labelType==='time'){
+            text=formatCurrentTime(gv(p+'timeFmt')||'HH:mm');
+        }else{
+            text=gv(p+'text').trim();
+        }
+        if(!text)return;
+        var target=gv(p+'target');
+        var mode=gv(p+'mode');
+        var pos=gv(p+'pos');
+        var sides=[];
+        if(target==='sent'||target==='both')sides.push('sent');
+        if(target==='recv'||target==='both')sides.push('received');
+
+        // 读取样式参数
+        var _lSize=gvn(p+'size');
+        var _lColor=gv(p+'color');
+        var _lAlpha=gvn(p+'alpha');
+        var _lOffX=gvn(p+'offsetX');
+        var _lOffY=gvn(p+'offsetY');
+        var _lWeight=gv(p+'fontWeight');
+        var _lStyle=gv(p+'fontStyle');
+        var _lSpacing=gvn(p+'letterSpacing');
+        var _lColorVal=(_lColor&&_lColor.charAt(0)==='#'&&_lColor.length===7)?hexToRgba(_lColor,_lAlpha):'rgba(153,153,153,0.6)';
+
+        var baseStyle='font-size:'+_lSize+'px;color:'+_lColorVal+';font-weight:'+_lWeight+';font-style:'+_lStyle+';line-height:1.2;white-space:nowrap;pointer-events:none;display:block;';
+        if(_lSpacing>0)baseStyle+='letter-spacing:'+_lSpacing+'px;';
+
+        sides.forEach(function(cssClass){
+            var rows=body.querySelectorAll('.cda-msg-row.'+cssClass);
+            rows.forEach(function(row){
+                var shouldShow=false;
+                if(mode==='all')shouldShow=true;
+                else if(mode==='last')shouldShow=row.classList.contains('group-last');
+                else if(mode==='first')shouldShow=row.classList.contains('group-start');
+                if(!shouldShow)return;
+
+                var wrap=row.querySelector('.cda-bubble-label-wrap');
+                if(!wrap)return;
+                var bubble=wrap.querySelector('.cda-bubble');
+                if(!bubble)return;
+
+                var labelEl=document.createElement('span');
+                labelEl.className='cda-bubble-label tg-label-el tg-lbl-'+item.id;
+                labelEl.textContent=text;
+
+                var isInline=(pos==='inline-right'||pos==='inline-left');
+                var isSide=(pos==='right'||pos==='left');
+
+                if(isInline){
+                    bubble.style.position='relative';
+                    if(pos==='inline-right'){
+                        labelEl.style.cssText=baseStyle+'position:absolute;bottom:'+(2+_lOffY)+'px;right:'+(6-_lOffX)+'px;';
+                    }else{
+                        labelEl.style.cssText=baseStyle+'position:absolute;bottom:'+(2+_lOffY)+'px;left:'+(6+_lOffX)+'px;';
+                    }
+                    bubble.appendChild(labelEl);
+                }else if(isSide){
+                    var bubbleWrap=row.querySelector('.cda-bubble-wrap');
+                    if(bubbleWrap){
+                        bubbleWrap.style.display='flex';
+                        bubbleWrap.style.alignItems='flex-end';
+                        bubbleWrap.style.gap='0px';
+                        bubbleWrap.dataset.tsStyle='1';
+                        var sideStyle=baseStyle+'flex-shrink:0;position:relative;bottom:'+(-_lOffY)+'px;';
+                        if(pos==='left'){
+                            sideStyle+='margin-right:'+(4+_lOffX)+'px;';
+                            labelEl.style.cssText=sideStyle;
+                            bubbleWrap.insertBefore(labelEl,bubbleWrap.firstChild);
+                        }else{
+                            sideStyle+='margin-left:'+(4+_lOffX)+'px;';
+                            labelEl.style.cssText=sideStyle;
+                            bubbleWrap.appendChild(labelEl);
+                        }
+                    }
+                }else if(pos==='above'){
+                    labelEl.style.cssText=baseStyle+'margin-bottom:'+_lOffY+'px;'+(_lOffX!==0?'margin-left:'+_lOffX+'px;':'')+'padding:0 2px;';
+                    wrap.insertBefore(labelEl,bubble);
+                }else{
+                    // below
+                    labelEl.style.cssText=baseStyle+'margin-top:'+_lOffY+'px;'+(_lOffX!==0?'margin-left:'+_lOffX+'px;':'')+'padding:0 2px;';
+                    wrap.appendChild(labelEl);
+                }
+            });
+        });
+    });
+}
+
 // ═══ 生成CSS ═══
 function generateCSS(forPreview){
     var P=forPreview?'.tg-chat ':'#chatDetailAlt ';
@@ -772,9 +1036,20 @@ function generateCSS(forPreview){
     });
 
     // 头像
-    css+=P+'.cda-msg-av{width:'+gvn('avSize')+'px!important;height:'+gvn('avSize')+'px!important;border-radius:'+gvn('avRadius')+'%!important;';
+    var avSize=gvn('avSize');
+    css+=P+'.cda-msg-av{width:'+avSize+'px!important;height:'+avSize+'px!important;border-radius:'+gvn('avRadius')+'%!important;';
     if(gvn('avBorderW')>0)css+='border:'+gvn('avBorderW')+'px solid '+gv('avBorderColor')+'!important;';
     css+='}\n';
+    // 头像对齐
+    var avAlign=gv('avAlign')||'flex-end';
+    var avOffsetY=gvn('avOffsetY');
+    if(avAlign!=='flex-end'){
+        css+=P+'.cda-msg-row{align-items:'+avAlign+'!important;}\n';
+    }
+    if(avOffsetY>0){
+        css+=P+'.cda-msg-av{margin-bottom:'+avOffsetY+'px!important;}\n';
+        css+=P+'.cda-sent-av{margin-bottom:'+avOffsetY+'px!important;}\n';
+    }
     var avRecv=gv('avRecvRule'),avSent=gv('avSentRule');
     if(avRecv==='none')css+=P+'.cda-msg-row.received .cda-msg-av{display:none!important;}\n';
     else if(avRecv==='all')css+=P+'.cda-msg-row.received .cda-msg-av.hidden{visibility:visible!important;}\n';
@@ -782,15 +1057,31 @@ function generateCSS(forPreview){
     else if(avSent==='all'){
         css+=P+'.cda-msg-row.sent .cda-sent-av{display:flex!important;}\n';
         css+=P+'.cda-msg-row.sent .cda-sent-av.hidden{visibility:visible!important;display:flex!important;}\n';
+        css+=P+'.cda-sent-av{width:'+avSize+'px!important;height:'+avSize+'px!important;border-radius:'+gvn('avRadius')+'%!important;';
+        if(gvn('avBorderW')>0)css+='border:'+gvn('avBorderW')+'px solid '+gv('avBorderColor')+'!important;';
+        css+='}\n';
     }else if(avSent==='last'){
         css+=P+'.cda-msg-row.sent .cda-sent-av{display:flex!important;}\n';
+        css+=P+'.cda-sent-av{width:'+avSize+'px!important;height:'+avSize+'px!important;border-radius:'+gvn('avRadius')+'%!important;';
+        if(gvn('avBorderW')>0)css+='border:'+gvn('avBorderW')+'px solid '+gv('avBorderColor')+'!important;';
+        css+='}\n';
     }
     css+='\n';
 
     // 间距
     css+=P+'.cda-msg-row{padding:'+Math.round(gvn('spRow')/2)+'px 0!important;gap:'+gvn('spAvGap')+'px!important;}\n';
     css+=P+'.cda-msg-row.group-start{margin-top:'+gvn('spGroup')+'px!important;}\n';
-    css+=(forPreview?'.tg-chat-body':P+'.cda-messages')+'{padding:'+gvn('spAreaPad')+'px!important;}\n\n';
+    css+=(forPreview?'.tg-chat-body':P+'.cda-messages')+'{padding:'+gvn('spAreaPad')+'px!important;}\n';
+    // 独立头像间距
+    var spRecvGap=gvn('spRecvAvGap');
+    var spSentGap=gvn('spSentAvGap');
+    if(spRecvGap!==6){
+        css+=P+'.cda-msg-row.received{gap:'+spRecvGap+'px!important;}\n';
+    }
+    if(spSentGap!==6){
+        css+=P+'.cda-msg-row.sent{gap:'+spSentGap+'px!important;}\n';
+    }
+    css+='\n';
 
     // 旁白
     var narrLh=(gvn('narrLh')/100).toFixed(2);
@@ -1036,7 +1327,10 @@ function generateCSS(forPreview){
 
     // 背景
     var bgUrl=gv('bgUrl').trim();
-    css+=(forPreview?'.tg-chat-body':P+'.cda-messages')+'{background:'+gv('bgColor')+'!important;}\n';
+    var bgColorVal=gv('bgColorText').trim()||gv('bgColor');
+    var isValidColor=bgColorVal&&(bgColorVal.charAt(0)==='#'||bgColorVal.indexOf('rgb')===0||bgColorVal.indexOf('hsl')===0);
+    if(!isValidColor)bgColorVal=gv('bgColor');
+    css+=(forPreview?'.tg-chat-body':P+'.cda-messages')+'{background:'+bgColorVal+'!important;}\n';
     if(bgUrl){
         if(forPreview){
             css+='.tg-chat-body{background-image:url('+bgUrl+')!important;background-size:cover!important;background-position:center!important;}\n';
@@ -1055,47 +1349,107 @@ function generateCSS(forPreview){
         css+=P+'.cda-msg-row.received.has-tail .cda-bubble-wrap::before,'+P+'.cda-msg-row.received.has-tail .cda-bubble-wrap::after{display:none!important;}\n';
     }
 
-    // 自定义气泡尾巴
+    // 自定义气泡尾巴（焊接模式）
+    var tailsByTarget={sent:[],recv:[]};
     tailItems.forEach(function(item){
         var p='tail'+item.id+'_';
         var url=gv(p+'url').trim();
         if(!url)return;
         var target=gv(p+'target');
-        var pos=gv(p+'pos');
-        var w=gvn(p+'w'),h=gvn(p+'h');
+        var weld=gv(p+'weld');
+        var size=gvn(p+'size');
         var x=gvn(p+'x'),y=gvn(p+'y');
         var alpha=(gvn(p+'alpha')/100).toFixed(2);
         var rotate=gvn(p+'rotate');
+        var flipH=gv(p+'flipH')==='flip';
+        var flipV=gv(p+'flipV')==='flip';
 
+        // 焊接点：根据 weld 值自动计算精确的 CSS 定位
+        // 焊接点把图片的中心对准气泡角落，然后用户微调
         var posCSS='';
-        if(pos==='top-left')posCSS='top:'+y+'px;left:'+x+'px;';
-        else if(pos==='top-right')posCSS='top:'+y+'px;right:'+(-x)+'px;';
-        else if(pos==='bottom-left')posCSS='bottom:'+(-y)+'px;left:'+x+'px;';
-        else if(pos==='bottom-right')posCSS='bottom:'+(-y)+'px;right:'+(-x)+'px;';
+        var halfSize=Math.round(size/2);
+        if(weld==='sent-br'||weld==='recv-br'){
+            posCSS='bottom:'+(-halfSize+y)+'px;right:'+(-halfSize-x)+'px;';
+        }else if(weld==='sent-bl'||weld==='recv-bl'){
+            posCSS='bottom:'+(-halfSize+y)+'px;left:'+(-halfSize+x)+'px;';
+        }else if(weld==='sent-tr'||weld==='recv-tr'){
+            posCSS='top:'+(-halfSize+y)+'px;right:'+(-halfSize-x)+'px;';
+        }else if(weld==='sent-tl'||weld==='recv-tl'){
+            posCSS='top:'+(-halfSize+y)+'px;left:'+(-halfSize+x)+'px;';
+        }
 
-        var targets=[];
-        if(target==='sent'||target==='both')targets.push(P+'.cda-msg-row.sent .cda-bubble');
-        if(target==='recv'||target==='both')targets.push(P+'.cda-msg-row.received .cda-bubble');
+        var transformParts=[];
+        if(rotate!==0)transformParts.push('rotate('+rotate+'deg)');
+        if(flipH)transformParts.push('scaleX(-1)');
+        if(flipV)transformParts.push('scaleY(-1)');
+        var transformCSS=transformParts.length>0?'transform:'+transformParts.join(' ')+'!important;':'';
 
-        targets.forEach(function(sel){
-            css+=sel+'{overflow:visible!important;position:relative!important;}\n';
-            // 用content+background-image的伪元素
-            var pseudoCount=tailItems.filter(function(t){return t.id<=item.id&&gv('tail'+t.id+'_target')===target;}).length;
-            var pseudo=pseudoCount<=1?'::after':'::before';
-            css+=sel+pseudo+'{\n';
-            css+='  content:""!important;position:absolute!important;\n';
-            css+='  '+posCSS+'\n';
-            css+='  width:'+w+'px!important;height:'+h+'px!important;\n';
-            css+='  background-image:url('+url+')!important;background-size:contain!important;background-repeat:no-repeat!important;\n';
-            css+='  opacity:'+alpha+'!important;\n';
-            css+='  transform:rotate('+rotate+'deg)!important;\n';
-            css+='  pointer-events:none!important;z-index:2!important;\n';
-            css+='}\n';
-        });
+        var tailData={url:url,posCSS:posCSS,w:size,h:size,alpha:alpha,transformCSS:transformCSS,id:item.id};
+        if(target==='sent'||target==='both')tailsByTarget.sent.push(tailData);
+        if(target==='recv'||target==='both')tailsByTarget.recv.push(tailData);
     });
+
+    if(forPreview){
+        ['sent','recv'].forEach(function(side){
+            var tails=tailsByTarget[side];
+            if(tails.length===0)return;
+            var sel=P+(side==='sent'?'.cda-msg-row.sent .cda-bubble':'.cda-msg-row.received .cda-bubble');
+            css+=sel+'{overflow:visible!important;position:relative!important;}\n';
+            tails.forEach(function(td){
+                var cls='tg-tail-'+side+'-'+td.id;
+                css+='.'+cls+'{\n';
+                css+='  position:absolute!important;pointer-events:none!important;z-index:2!important;\n';
+                css+='  '+td.posCSS+'\n';
+                css+='  width:'+td.w+'px!important;height:'+td.h+'px!important;\n';
+                css+='  background-image:url('+td.url+')!important;background-size:contain!important;background-repeat:no-repeat!important;\n';
+                css+='  opacity:'+td.alpha+'!important;\n';
+                if(td.transformCSS)css+='  '+td.transformCSS+'\n';
+                css+='}\n';
+            });
+        });
+        requestAnimationFrame(function(){injectTailElements(tailsByTarget);});
+    }else{
+        ['sent','recv'].forEach(function(side){
+            var tails=tailsByTarget[side];
+            if(tails.length===0)return;
+            var rowSel=side==='sent'?'.cda-msg-row.sent':'.cda-msg-row.received';
+            var sel=P+rowSel+' .cda-bubble';
+            css+=sel+'{overflow:visible!important;position:relative!important;}\n';
+            tails.forEach(function(td,idx){
+                var pseudo=idx===0?'::after':'::before';
+                if(idx>=2){
+                    css+='/* ⚠️ 尾巴 #'+td.id+' 超出伪元素限制(每侧最多2个)，请减少尾巴数量 */\n';
+                    return;
+                }
+                // 用双重选择器提升优先级，覆盖水印样式
+                var highSel=P+rowSel+' .cda-bubble-wrap '+'.cda-bubble'+pseudo;
+                var highSel2=P+rowSel+' .cda-bubble'+pseudo;
+                css+=highSel2+',\n'+highSel+'{\n';
+                css+='  content:""!important;position:absolute!important;\n';
+                css+='  '+td.posCSS+'\n';
+                css+='  width:'+td.w+'px!important;height:'+td.h+'px!important;\n';
+                css+='  background-image:url('+td.url+')!important;background-size:contain!important;background-repeat:no-repeat!important;\n';
+                css+='  background-color:transparent!important;\n';
+                css+='  opacity:'+td.alpha+'!important;\n';
+                if(td.transformCSS)css+='  '+td.transformCSS+'\n';
+                css+='  pointer-events:none!important;z-index:2!important;\n';
+                css+='  font-size:0!important;color:transparent!important;letter-spacing:0!important;\n';
+                css+='  -webkit-text-fill-color:transparent!important;\n';
+                css+='  white-space:nowrap!important;line-height:0!important;\n';
+                css+='  bottom:auto;right:auto;top:auto;left:auto;\n';
+                css+='  '+td.posCSS+'\n';
+                css+='}\n';
+            });
+            // 如果有尾巴用了::after，需要禁用该侧的水印
+            if(tails.length>=1){
+                css+='/* 禁用'+side+'侧气泡水印（被尾巴::after占用） */\n';
+            }
+        });
+    }
     css+='\n';
 
     // 装饰图
+
     decorItems.forEach(function(item){
         var p='decor'+item.id+'_';
         var url=gv(p+'url').trim();
@@ -1193,6 +1547,511 @@ function showToast(msg){
     var t=document.getElementById('tgToast');
     t.textContent=msg;t.classList.add('show');
     setTimeout(function(){t.classList.remove('show');},1500);
+}
+
+// ═══ 导入系统 ═══
+document.getElementById('tgImport').addEventListener('click',function(){
+    document.getElementById('tgImportOverlay').classList.add('active');
+});
+document.getElementById('tgImportBg').addEventListener('click',function(){document.getElementById('tgImportOverlay').classList.remove('active');});
+document.getElementById('tgImportClose').addEventListener('click',function(){document.getElementById('tgImportOverlay').classList.remove('active');});
+
+document.getElementById('tgImportApply').addEventListener('click',function(){
+    var css=document.getElementById('tgImportCode').value;
+    if(!css.trim()){showToast('请粘贴CSS');return;}
+    var count=parseCssToControls(css);
+    document.getElementById('tgImportOverlay').classList.remove('active');
+    applyPreview();
+    showToast('已导入 '+count+' 项设置');
+});
+
+function parseCssToControls(css){
+    var count=0;
+
+    // 辅助：从CSS中提取属性值（合并同选择器的多个块）
+    function extractBlock(selector){
+        var escaped=selector.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        var re=new RegExp(escaped+'\\s*\\{([^}]*)\\}','g');
+        var combined='';
+        var m;
+        while((m=re.exec(css))!==null){
+            combined+=m[1]+';';
+        }
+        return combined;
+    }
+
+    function extractProp(block,prop){
+        var re=new RegExp(prop+'\\s*:\\s*([^;!]+)');
+        var m=re.exec(block);
+        return m?m[1].trim():'';
+    }
+
+    function setCtrl(id,val){
+        var el=document.getElementById(id);
+        if(!el||val===''||val===undefined)return false;
+        el.value=val;
+        var valEl=document.getElementById(id+'Val');
+        if(valEl)valEl.textContent=val+(el.dataset&&el.dataset.suffix?el.dataset.suffix:'');
+        // 联动文本框
+        var linkId=el.dataset?el.dataset.link:'';
+        if(linkId){
+            var linked=document.getElementById(linkId);
+            if(linked)linked.value=val;
+        }
+        return true;
+    }
+
+    function setColor(id,val){
+        if(!val)return false;
+        // 把各种颜色格式转成 #hex
+        var hex=colorToHex(val);
+        if(!hex)return false;
+        if(setCtrl(id,hex)){
+            setCtrl(id+'Text',hex);
+            count++;
+            return true;
+        }
+        return false;
+    }
+
+    function setNum(id,val){
+        if(val===''||val===undefined)return false;
+        var n=parseFloat(val);
+        if(isNaN(n))return false;
+        if(setCtrl(id,n)){count++;return true;}
+        return false;
+    }
+
+    function setSelect(id,val){
+        if(!val)return false;
+        if(setCtrl(id,val)){count++;return true;}
+        return false;
+    }
+
+    function colorToHex(c){
+        if(!c)return '';
+        c=c.trim();
+        if(c.charAt(0)==='#'){
+            if(c.length===7)return c;
+            if(c.length===4)return '#'+c[1]+c[1]+c[2]+c[2]+c[3]+c[3];
+            return c;
+        }
+        // rgba(r,g,b,a) or rgb(r,g,b)
+        var m=c.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+        if(m){
+            var r=parseInt(m[1]),g=parseInt(m[2]),b=parseInt(m[3]);
+            return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+        }
+        return '';
+    }
+
+    function extractAlphaFromRgba(c){
+        var m=c.match(/rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*([\d.]+)\s*\)/);
+        return m?Math.round(parseFloat(m[1])*100):-1;
+    }
+
+    function parseBoxShadow(val){
+        // "0px 2px 3px rgba(0,0,0,0.09)"
+        var m=val.match(/([\d.-]+)px\s+([\d.-]+)px\s+([\d.-]+)px\s+(rgba?\([^)]+\)|#\w+)/);
+        if(!m)return null;
+        return {x:parseFloat(m[1]),y:parseFloat(m[2]),blur:parseFloat(m[3]),color:m[4]};
+    }
+
+    function parseBorder(val){
+        // "0.5px solid rgba(0,0,0,0.06)"
+        var m=val.match(/([\d.]+)px\s+\w+\s+(rgba?\([^)]+\)|#\w+)/);
+        if(!m)return null;
+        return {width:parseFloat(m[1]),color:m[2]};
+    }
+
+    // ═══ 解析气泡 ═══
+    ['sent','recv'].forEach(function(side){
+        var prefix=side;
+        var rowSel=side==='sent'?'.cda-msg-row.sent':'.cda-msg-row.received';
+
+        // 气泡样式
+        var bubbleBlock=extractBlock('#chatDetailAlt '+rowSel+' .cda-bubble');
+        if(!bubbleBlock)bubbleBlock=extractBlock('.tg-chat '+rowSel+' .cda-bubble');
+        if(bubbleBlock){
+            setColor(prefix+'Bg',extractProp(bubbleBlock,'background'));
+            setColor(prefix+'Color',extractProp(bubbleBlock,'color'));
+            var radius=extractProp(bubbleBlock,'border-radius');
+            if(radius)setNum(prefix+'Radius',parseInt(radius));
+            var padding=extractProp(bubbleBlock,'padding');
+            if(padding){
+                var pp=padding.split(/\s+/);
+                if(pp.length>=2){
+                    setNum(prefix+'PadV',parseInt(pp[0]));
+                    setNum(prefix+'PadH',parseInt(pp[1]));
+                }else if(pp.length===1){
+                    setNum(prefix+'PadV',parseInt(pp[0]));
+                    setNum(prefix+'PadH',parseInt(pp[0]));
+                }
+            }
+            var shadow=extractProp(bubbleBlock,'box-shadow');
+            if(shadow&&shadow!=='none'){
+                var sh=parseBoxShadow(shadow);
+                if(sh){
+                    setNum(prefix+'ShadowX',sh.x);
+                    setNum(prefix+'ShadowY',sh.y);
+                    setNum(prefix+'ShadowBlur',sh.blur);
+                    setColor(prefix+'ShadowColor',sh.color);
+                    var sa=extractAlphaFromRgba(sh.color);
+                    if(sa>=0)setNum(prefix+'ShadowAlpha',sa);
+                }
+            }
+            var border=extractProp(bubbleBlock,'border');
+            if(border&&border!=='none'){
+                var bd=parseBorder(border);
+                if(bd){
+                    setNum(prefix+'BorderW',bd.width);
+                    setColor(prefix+'BorderColor',bd.color);
+                    var ba=extractAlphaFromRgba(bd.color);
+                    if(ba>=0)setNum(prefix+'BorderAlpha',ba);
+                }
+            }
+        }
+
+        // 最大宽度
+        var wrapBlock=extractBlock('#chatDetailAlt '+rowSel+' .cda-bubble-wrap');
+        if(!wrapBlock)wrapBlock=extractBlock('.tg-chat '+rowSel+' .cda-bubble-wrap');
+        if(wrapBlock){
+            var mw=extractProp(wrapBlock,'max-width');
+            if(mw)setNum(prefix+'MaxW',parseInt(mw));
+        }
+    });
+
+    // ═══ 解析头像 ═══
+    var avBlock=extractBlock('#chatDetailAlt .cda-msg-av');
+    if(!avBlock)avBlock=extractBlock('.tg-chat .cda-msg-av');
+    if(avBlock){
+        var avW=extractProp(avBlock,'width');
+        if(avW)setNum('avSize',parseInt(avW));
+        var avR=extractProp(avBlock,'border-radius');
+        if(avR)setNum('avRadius',parseInt(avR));
+        var avBd=extractProp(avBlock,'border');
+        if(avBd){
+            var abd=parseBorder(avBd);
+            if(abd){
+                setNum('avBorderW',abd.width);
+                setColor('avBorderColor',abd.color);
+            }
+        }
+    }
+    // 头像显示规则
+    if(css.indexOf('.cda-msg-row.received .cda-msg-av{display:none')!==-1)setSelect('avRecvRule','none');
+    else if(css.indexOf('.cda-msg-av.hidden{visibility:visible')!==-1)setSelect('avRecvRule','all');
+    if(css.indexOf('.cda-sent-av.hidden{visibility:visible')!==-1)setSelect('avSentRule','all');
+    else if(css.indexOf('.cda-sent-av{display:flex')!==-1)setSelect('avSentRule','last');
+    // 头像对齐
+    var rowBlock=extractBlock('#chatDetailAlt .cda-msg-row');
+    if(!rowBlock)rowBlock=extractBlock('.tg-chat .cda-msg-row');
+    if(rowBlock){
+        var ai=extractProp(rowBlock,'align-items');
+        if(ai)setSelect('avAlign',ai);
+        var rowPad=extractProp(rowBlock,'padding');
+        if(rowPad){
+            var rp=parseInt(rowPad);
+            if(!isNaN(rp))setNum('spRow',rp*2);
+        }
+        var rowGap=extractProp(rowBlock,'gap');
+        if(rowGap)setNum('spAvGap',parseInt(rowGap));
+    }
+    // 头像margin-bottom (avOffsetY)
+    var avMbBlock=extractBlock('#chatDetailAlt .cda-msg-av');
+    if(avMbBlock){
+        var avMb=extractProp(avMbBlock,'margin-bottom');
+        if(avMb)setNum('avOffsetY',parseInt(avMb));
+    }
+
+    // ═══ 解析间距 ═══
+    var gsBlock=extractBlock('#chatDetailAlt .cda-msg-row.group-start');
+    if(gsBlock){
+        var mt=extractProp(gsBlock,'margin-top');
+        if(mt)setNum('spGroup',parseInt(mt));
+    }
+    var msgBlock=extractBlock('#chatDetailAlt .cda-messages');
+    if(msgBlock){
+        var mp=extractProp(msgBlock,'padding');
+        if(mp)setNum('spAreaPad',parseInt(mp));
+        var msgBg=extractProp(msgBlock,'background');
+        if(msgBg){
+            setColor('bgColor',msgBg);
+        }
+    }
+    // 独立gap
+    var sentRowBlock=extractBlock('#chatDetailAlt .cda-msg-row.sent');
+    if(sentRowBlock){
+        var sentGap=extractProp(sentRowBlock,'gap');
+        if(sentGap)setNum('spSentAvGap',parseInt(sentGap));
+    }
+    var recvRowBlock=extractBlock('#chatDetailAlt .cda-msg-row.received');
+    if(recvRowBlock){
+        var recvGap=extractProp(recvRowBlock,'gap');
+        if(recvGap)setNum('spRecvAvGap',parseInt(recvGap));
+    }
+
+    // ═══ 解析旁白 ═══
+    var narrBlock=extractBlock('#chatDetailAlt .cda-narr-line');
+    if(!narrBlock)narrBlock=extractBlock('.tg-chat .cda-narr-line');
+    if(narrBlock){
+        var nfs=extractProp(narrBlock,'font-size');
+        if(nfs)setNum('narrSize',parseInt(nfs));
+        var nc=extractProp(narrBlock,'color');
+        if(nc){
+            setColor('narrColor',nc);
+            var na=extractAlphaFromRgba(nc);
+            if(na>=0)setNum('narrAlpha',na);
+            else if(nc.charAt(0)==='#')setNum('narrAlpha',100);
+        }
+        var npad=extractProp(narrBlock,'padding');
+        if(npad){
+            var np2=npad.split(/\s+/);
+            if(np2.length>=2){
+                setNum('narrPadV',parseInt(np2[0]));
+                setNum('narrPadH',parseInt(np2[1]));
+            }
+        }
+        var nlh=extractProp(narrBlock,'line-height');
+        if(nlh)setNum('narrLh',Math.round(parseFloat(nlh)*100));
+        var nta=extractProp(narrBlock,'text-align');
+        if(nta)setSelect('narrAlign',nta);
+        var nfi=extractProp(narrBlock,'font-style');
+        if(nfi)setSelect('narrItalic',nfi);
+    }
+
+    // ═══ 解析顶栏 ═══
+    if(css.indexOf('TB_FULL')!==-1){
+        setSelect('tbOverride','full');
+    }
+    var tbBlock=extractBlock('#chatDetailAlt .cda-topbar');
+    if(!tbBlock)tbBlock=extractBlock('.tg-chat-topbar');
+    if(tbBlock){
+        var tbBg=extractProp(tbBlock,'background');
+        if(tbBg){
+            setColor('tbBg',tbBg);
+            var tbBa=extractAlphaFromRgba(tbBg);
+            if(tbBa>=0)setNum('tbBgAlpha',tbBa);
+            else if(tbBg.charAt(0)==='#')setNum('tbBgAlpha',100);
+        }
+        var tbMh=extractProp(tbBlock,'min-height');
+        if(tbMh)setNum('tbHeight',parseInt(tbMh));
+        var tbBb=extractProp(tbBlock,'border-bottom');
+        if(tbBb){
+            var tbb=parseBorder(tbBb);
+            if(tbb)setNum('tbBorderB',tbb.width);
+        }
+    }
+    var tbNameBlock=extractBlock('#chatDetailAlt .cda-topbar-name');
+    if(tbNameBlock){
+        var tnc=extractProp(tbNameBlock,'color');
+        if(tnc)setColor('tbNameColor',tnc);
+        var tns=extractProp(tbNameBlock,'font-size');
+        if(tns)setNum('tbNameSize',parseInt(tns));
+    }
+
+    // ═══ 解析底栏 ═══
+    if(css.indexOf('IB_FULL')!==-1){
+        setSelect('ibOverride','full');
+    }
+    var ibBlock=extractBlock('#chatDetailAlt .cda-input-bar');
+    if(!ibBlock)ibBlock=extractBlock('.tg-chat-input');
+    if(ibBlock){
+        var ibBg=extractProp(ibBlock,'background');
+        if(ibBg){
+            setColor('ibBg',ibBg);
+            var ibBa=extractAlphaFromRgba(ibBg);
+            if(ibBa>=0)setNum('ibBgAlpha',ibBa);
+            else if(ibBg.charAt(0)==='#')setNum('ibBgAlpha',100);
+        }
+        var ibMh=extractProp(ibBlock,'min-height');
+        if(ibMh)setNum('ibHeight',parseInt(ibMh));
+        var ibP=extractProp(ibBlock,'padding');
+        if(ibP){
+            var ibPm=ibP.match(/(\d+)px/g);
+            if(ibPm&&ibPm.length>=2)setNum('ibPadH',parseInt(ibPm[1]));
+        }
+        var ibG=extractProp(ibBlock,'gap');
+        if(ibG)setNum('ibGap',parseInt(ibG));
+    }
+    // 输入框
+    var ifBlock=extractBlock('#chatDetailAlt .cda-input-field');
+    if(!ifBlock)ifBlock=extractBlock('#chatDetailAlt .cda-input-bar .cda-input-field');
+    if(ifBlock){
+        var ifR=extractProp(ifBlock,'border-radius');if(ifR)setNum('ibFieldRadius',parseInt(ifR));
+        var ifH=extractProp(ifBlock,'height');if(ifH)setNum('ibFieldH',parseInt(ifH));
+        var ifBg=extractProp(ifBlock,'background');if(ifBg)setColor('ibFieldBg',ifBg);
+        var ifBorder=extractProp(ifBlock,'border');
+        if(ifBorder){
+            var ifBd=parseBorder(ifBorder);
+            if(ifBd){
+                setNum('ibFieldBorderW',ifBd.width);
+                setColor('ibFieldBorderColor',ifBd.color);
+                var ifBa=extractAlphaFromRgba(ifBd.color);
+                if(ifBa>=0)setNum('ibFieldBorderAlpha',ifBa);
+            }
+        }
+    }
+    // + 按钮
+    var plusBlock=extractBlock('#chatDetailAlt #cdaPlusBtn');
+    if(plusBlock){
+        var pw=extractProp(plusBlock,'width');if(pw)setNum('ibPlusSize',parseInt(pw));
+        var pr=extractProp(plusBlock,'border-radius');if(pr)setNum('ibPlusRadius',parseInt(pr));
+        var pbg=extractProp(plusBlock,'background');if(pbg)setColor('ibPlusBg',pbg);
+    }
+    // 发送键
+    var sendBlock=extractBlock('#chatDetailAlt .cda-input-send');
+    if(sendBlock){
+        var sw=extractProp(sendBlock,'width');if(sw)setNum('ibSendSize',parseInt(sw));
+        var sr=extractProp(sendBlock,'border-radius');if(sr)setNum('ibSendRadius',parseInt(sr));
+        var sbg=extractProp(sendBlock,'background');if(sbg)setColor('ibSendBg',sbg);
+    }
+
+    // ═══ 解析字体 ═══
+    var bubbleBlock2=extractBlock('#chatDetailAlt .cda-bubble');
+    if(bubbleBlock2){
+        var bfs=extractProp(bubbleBlock2,'font-size');
+        if(bfs)setNum('fontBubbleSize',parseInt(bfs));
+        var blh=extractProp(bubbleBlock2,'line-height');
+        if(blh)setNum('fontLh',Math.round(parseFloat(blh)*100));
+        var bff=extractProp(bubbleBlock2,'font-family');
+        if(bff){
+            var fm=bff.match(/"([^"]+)"/);
+            if(fm&&fm[1])setCtrl('fontName',fm[1]);
+        }
+    }
+
+    // ═══ 解析尾巴隐藏 ═══
+    if(css.indexOf('.cda-msg-row.sent.has-tail .cda-bubble-wrap::before')!==-1&&css.indexOf('.cda-msg-row.sent.has-tail .cda-bubble-wrap::after')!==-1){
+        if(css.indexOf('sent.has-tail .cda-bubble-wrap::before,')!==-1||css.indexOf('sent.has-tail .cda-bubble-wrap::after{display:none')!==-1){
+            setSelect('sentTailHide','hide');
+        }
+    }
+    if(css.indexOf('.cda-msg-row.received.has-tail .cda-bubble-wrap::before')!==-1&&css.indexOf('.cda-msg-row.received.has-tail .cda-bubble-wrap::after')!==-1){
+        if(css.indexOf('received.has-tail .cda-bubble-wrap::before,')!==-1||css.indexOf('received.has-tail .cda-bubble-wrap::after{display:none')!==-1){
+            setSelect('recvTailHide','hide');
+        }
+    }
+
+    // ═══ 解析背景图 ═══
+    var bgBeforeBlock=extractBlock('#chatDetailAlt .cda-messages::before');
+    if(bgBeforeBlock){
+        var bgImg=extractProp(bgBeforeBlock,'background-image');
+        if(bgImg){
+            var urlMatch=bgImg.match(/url\(([^)]+)\)/);
+            if(urlMatch)setCtrl('bgUrl',urlMatch[1]);
+        }
+        var bgBlur=extractProp(bgBeforeBlock,'filter');
+        if(bgBlur){
+            var blurM=bgBlur.match(/blur\((\d+)px\)/);
+            if(blurM)setNum('bgBlur',parseInt(blurM[1]));
+        }
+        var bgOp=extractProp(bgBeforeBlock,'opacity');
+        if(bgOp)setNum('bgAlpha',Math.round(parseFloat(bgOp)*100));
+    }
+
+    // ═══ 解析自定义尾巴（伪元素） ═══
+    // 匹配包含多选择器（逗号分隔）的块
+    var tailRegex2=/#chatDetailAlt\s+\.cda-msg-row\.(sent|received)\s+\.cda-bubble::(after|before)[^{]*\{([\s\S]*?)\}/g;
+    var tailMatch2;
+    var tailParsed={};// 用URL去重，避免重复导入
+    while((tailMatch2=tailRegex2.exec(css))!==null){
+        var tSide2=tailMatch2[1]==='sent'?'sent':'recv';
+        var tBody2=tailMatch2[3];
+        // 提取URL
+        var tUrlMatch2=tBody2.match(/background-image:\s*url\(([^)]+)\)/);
+        if(!tUrlMatch2)continue;
+        var tUrlClean2=tUrlMatch2[1];
+        // 去重
+        var dedupKey=tSide2+'_'+tUrlClean2;
+        if(tailParsed[dedupKey])continue;
+        tailParsed[dedupKey]=true;
+
+        // 提取尺寸
+        var tWidthM=tBody2.match(/width:\s*([\d.]+)px/);
+        var tSize2=tWidthM?parseInt(tWidthM[1]):38;
+
+        // 提取透明度
+        var tAlphaM=tBody2.match(/opacity:\s*([\d.]+)/);
+        var tAlpha2=tAlphaM?Math.round(parseFloat(tAlphaM[1])*100):100;
+
+        // 提取transform（旋转、翻转）
+        var tTransM=tBody2.match(/transform:\s*([^;!]+)/);
+        var tRotate2=0,tFlipH2=false,tFlipV2=false;
+        if(tTransM){
+            var rotM2=tTransM[1].match(/rotate\(([-\d.]+)deg\)/);
+            if(rotM2)tRotate2=parseInt(rotM2[1]);
+            if(tTransM[1].indexOf('scaleX(-1)')!==-1)tFlipH2=true;
+            if(tTransM[1].indexOf('scaleY(-1)')!==-1)tFlipV2=true;
+        }
+
+        // 提取定位（取最后出现的top/left/right/bottom值，因为CSS里先reset再重写）
+        var allTopM=tBody2.match(/top:\s*([-\d.]+)px/g);
+        var allLeftM=tBody2.match(/left:\s*([-\d.]+)px/g);
+        var allRightM=tBody2.match(/right:\s*([-\d.]+)px/g);
+        var allBottomM=tBody2.match(/bottom:\s*([-\d.]+)px/g);
+        // 取最后一个有效值
+        var finalTop=allTopM?allTopM[allTopM.length-1].match(/([-\d.]+)/):null;
+        var finalLeft=allLeftM?allLeftM[allLeftM.length-1].match(/([-\d.]+)/):null;
+        var finalRight=allRightM?allRightM[allRightM.length-1].match(/([-\d.]+)/):null;
+        var finalBottom=allBottomM?allBottomM[allBottomM.length-1].match(/([-\d.]+)/):null;
+
+        var hasTop2=finalTop&&finalTop[1];
+        var hasLeft2=finalLeft&&finalLeft[1];
+        var hasRight2=finalRight&&finalRight[1];
+        var hasBottom2=finalBottom&&finalBottom[1];
+
+        // 判断焊接角
+        var corner2='';
+        if(hasTop2&&hasRight2)corner2='tr';
+        else if(hasTop2&&hasLeft2)corner2='tl';
+        else if(hasBottom2&&hasRight2)corner2='br';
+        else if(hasBottom2&&hasLeft2)corner2='bl';
+        else if(hasTop2)corner2=(tSide2==='sent'?'tr':'tl');
+        else corner2=(tSide2==='sent'?'br':'bl');
+        var weldVal2=tSide2+'-'+corner2;
+
+        // 计算微调偏移（从焊接点基准反推）
+        var halfSize2=Math.round(tSize2/2);
+        var xAdj=0,yAdj=0;
+        if(corner2==='tr'||corner2==='tl'){
+            var topVal=hasTop2?parseInt(hasTop2):0;
+            yAdj=topVal+halfSize2;// y微调 = top值 + halfSize（因为焊接公式 top = -halfSize+y）
+        }else{
+            var botVal=hasBottom2?parseInt(hasBottom2):0;
+            yAdj=botVal+halfSize2;// bottom = -halfSize+y → y = bottom+halfSize
+        }
+        if(corner2==='tr'||corner2==='br'){
+            var rightVal=hasRight2?parseInt(hasRight2):0;
+            xAdj=-(rightVal+halfSize2);// right = -halfSize-x → x = -(right+halfSize)
+        }else{
+            var leftVal=hasLeft2?parseInt(hasLeft2):0;
+            xAdj=leftVal+halfSize2;// left = -halfSize+x → x = left+halfSize
+        }
+
+        // 创建尾巴项
+        addTailItem();
+        var tItem2=tailItems[tailItems.length-1];
+        var tp2='tail'+tItem2.id+'_';
+        setTimeout((function(tp,tSide,tUrlClean,tSize,tAlpha,tRotate,tFlipH,tFlipV,weldVal,xAdj,yAdj){
+            return function(){
+                var el=document.getElementById(tp+'url');if(el)el.value=tUrlClean;
+                var tgt=document.getElementById(tp+'target');if(tgt)tgt.value=tSide;
+                setCtrl(tp+'size',tSize);
+                setCtrl(tp+'alpha',tAlpha);
+                setCtrl(tp+'rotate',tRotate);
+                setCtrl(tp+'x',xAdj);
+                setCtrl(tp+'y',yAdj);
+                var weldEl=document.getElementById(tp+'weld');if(weldEl)weldEl.value=weldVal;
+                if(tFlipH){var fh=document.getElementById(tp+'flipH');if(fh)fh.value='flip';}
+                if(tFlipV){var fv=document.getElementById(tp+'flipV');if(fv)fv.value='flip';}
+                applyPreview();
+            };
+        })(tp2,tSide2,tUrlClean2,tSize2,tAlpha2,tRotate2,tFlipH2,tFlipV2,weldVal2,xAdj,yAdj),100);
+        count++;
+    }
+
+    return count;
 }
 
 })();
